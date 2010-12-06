@@ -6,7 +6,7 @@ Date: 2010-07-27
 Author: James "JD" Long
 Maintainer: JD Long <jdlong@gmail.com>
 Depends: R (>= 2.7)
-Imports: rjson, caTools
+Imports: rjson, caTools, rJava
 Description: A segue into parallel processing on Amazon's Web Services. Includes a parallel lapply function for the Elastic Map Reduce (EMR) engine. This is NOT a map reduce project but it uses Hadoop Streaming on Amazon's EMR in order to get simple parallel computation ala cart. This is NOT a big data package. If you are CPU bound this might be a useful package. If you are IO bound, this is not the package you are looking for. 
 License: MIT License
 URL: http://code.google.com/p/segue/
