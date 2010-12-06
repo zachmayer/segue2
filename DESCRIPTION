@@ -2,7 +2,7 @@ Package: segue
 Type: Package
 Title: A segue into parallel processing on Amazon's Web Services. Includes a parallel lapply function for the Elastic Map Reduce (EMR) engine
 Version: 0.01
-Date: 2010-07-27
+Date: 2010-12-08
 Author: James "JD" Long
 Maintainer: JD Long <jdlong@gmail.com>
 Depends: R (>= 2.7)

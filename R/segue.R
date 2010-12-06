@@ -1,16 +1,14 @@
 
-.First.lib <- function(libname, pkgname){
-
  segue.env <- new.env()
 
 .onLoad <- function(lib, pkg) {
     library(rJava)
     .jinit()
 
-    assign(awsAccessKeyText, Sys.getenv("AWSACCESSKEY"), envir = segue.env)
-    assign(awsSecretKeyText, Sys.getenv("AWSSECRETKEY"), envir = segue.env)
+    assign("awsAccessKeyText", Sys.getenv("AWSACCESSKEY"), envir = segue.env)
+    assign("awsSecretKeyText", Sys.getenv("AWSSECRETKEY"), envir = segue.env)
     # gotta fix this path
-    pathToSdk <- "/home/jal/aws-java-sdk-1.1.0/"
+    pathToSdk <- paste(system.file(package = "segue") , "/inst/aws-java-sdk/", sep="")
 
     .jaddClassPath(paste(pathToSdk, "lib/aws-java-sdk-1.1.0.jar", sep=""))
     .jaddClassPath(paste(pathToSdk, "third-party/commons-logging-1.1.1/commons-logging-1.1.1.jar", sep=""))
