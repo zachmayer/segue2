@@ -12,7 +12,7 @@ code if needed. This function does everything except actually spin up
 the EMR cluster. 
 }
 \usage{
-createCluster(numInstances = 2, bootStrapLatestR = T, cranPackages = NULL, enableDebugging = F)
+createCluster(numInstances = 2, bootStrapLatestR = TRUE, cranPackages = NULL, enableDebugging = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

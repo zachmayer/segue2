@@ -1,5 +1,5 @@
-createCluster <- function(numInstances=2, bootStrapLatestR=T,
-                          cranPackages=NULL, enableDebugging=F){
+createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
+                          cranPackages=NULL, enableDebugging=FALSE){
   #TODO: add support for different instance sizes
 
   clusterObject <- list(numInstances=numInstances,
