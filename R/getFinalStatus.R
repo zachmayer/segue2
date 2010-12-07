@@ -1,7 +1,7 @@
 getFinalStatus <-
 function(jobFlowId){
   while (checkStatus(jobFlowId)$ExecutionStatusDetail$State %in% c("COMPLETED", "FAILED",
-                                                                   "TERMINATED", "WAITING")  == F) {
+                                                                   "TERMINATED", "WAITING")  == FALSE) {
     message(paste((checkStatus(jobFlowId)$ExecutionStatusDetail$State), " - ", Sys.time(), sep="" ))
     Sys.sleep(30)
   }

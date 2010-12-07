@@ -1,7 +1,7 @@
 \name{createCluster}
 \alias{createCluster}
 \title{
-Create a cluster by starting an EMR job and getting it ready to process input.
+Create a cluster by starting an EMR job
 }
 \description{
 Creates all the local infrastructure for a cluster. This creates temp
@@ -12,9 +12,10 @@ code if needed. This function does everything except actually spin up
 the EMR cluster. 
 }
 \usage{
-createCluster(numInstances = 2, bootStrapLatestR = TRUE, cranPackages = NULL, enableDebugging = FALSE)
+createCluster(numInstances = 2, bootStrapLatestR = TRUE,
+  cranPackages = NULL, enableDebugging = FALSE)
 }
-%- maybe also 'usage' for other objects documented here.
+
 \arguments{
   \item{numInstances}{
 Number of desired nodes. This is limited by Amazon to 20 by default. 
@@ -26,10 +27,10 @@ the starting of the nodes considerably. However, the default R on EMR
 was the one passed to the Children of Isreal by Moses. 
 }
   \item{cranPackages}{
-Text vector of the names of any CRAN packages you desire loaded. Yes I know you have the
-most beautiful little package you wrote yourself which you want to
-install. This code does not support that... yet. Get your package on CRAN or fork my
-fucking code and add that feature. ;)
+    Text vector of the names of any CRAN packages you desire loaded.
+    Yes I know you have the most beautiful little package you wrote
+    yourself which you want to install. This code does not support
+    that... yet.
 }
   \item{enableDebugging}{
 Thows Amazon EMR the debugging bit so you can log into the Amazon EMR
@@ -51,5 +52,8 @@ James "JD" Long
 startCluster(), terminateCluster()
 }
 \examples{
-myCluster   <- createCluster(numInstances=2, bootStrapLatestR=T, cranPackages=c("Hmisc", "plyr"))
+\dontrun{
+myCluster   <- createCluster(numInstances=2,
+bootStrapLatestR=TRUE, cranPackages=c("Hmisc", "plyr"))
+}
 }

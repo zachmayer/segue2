@@ -1,6 +1,5 @@
 \name{getFinalStatus}
 \alias{getFinalStatus}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Gets the final job status for an EMR job.
 }
@@ -11,7 +10,6 @@ until it hits a terminal status. This is a looping wrapper for checkStatus().
 \usage{
 getFinalStatus(jobFlowId)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{jobFlowId}{
 The jobFlowId is an EMR convention of a given job. This is an element of

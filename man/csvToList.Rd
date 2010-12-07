@@ -11,7 +11,6 @@ turns it into a proper R list.
 \usage{
 csvToList(inFileName)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{inFileName}{
 String pointing to the full path of the input CSV.
@@ -35,7 +34,9 @@ James "JD" Long
     a <- c(rnorm(999), NA)
     myList[[i]] <- a
   }
-  listToCsv(myList, "/tmp/tst.csv")
-  all.equal(myList,  csvToList("/tmp/tst.csv" ))
+
+  require(caTools)
+  listToCsv(myList, "tst.csv")
+  all.equal(myList,  csvToList("tst.csv" ))
 
 }

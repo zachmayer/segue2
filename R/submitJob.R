@@ -14,10 +14,10 @@ function(clusterObject){
                      " --reducer cat ",
                      " --output s3n://", s3TempDirOut, "/  ", 
                      " --cache s3n://", s3TempDir, "/emrData.RData#emrData.RData",
-                     if (enableDebugging==T) {" --enable-debugging "} ,
+                     if (enableDebugging==TRUE) {" --enable-debugging "} ,
                    sep="")
   
-  emrCallReturn <- system(emrCall, intern=T)
+  emrCallReturn <- system(emrCall, intern=TRUE)
   message(emrCallReturn)
   if (substr(emrCallReturn, 1, 14)!= "Added steps to"){
     message(paste("The job did not submit properly. The command line was ", emrCall, sep=""))
@@ -25,10 +25,10 @@ function(clusterObject){
     stop()
   }
   Sys.sleep(15)
-  if (enableDebugging==T){Sys.sleep(45)} #debugging has to be set up on each job so it takes a bit
+  if (enableDebugging==TRUE){Sys.sleep(45)} #debugging has to be set up on each job so it takes a bit
   
   while (checkStatus(jobFlowId)$ExecutionStatusDetail$State %in%
-         c("COMPLETED", "FAILED", "TERMINATED", "WAITING", "CANCELLED")  == F) {
+         c("COMPLETED", "FAILED", "TERMINATED", "WAITING", "CANCELLED")  == FALSE) {
     message(paste((checkStatus(jobFlowId)$ExecutionStatusDetail$State), " - ", Sys.time(), sep="" ))
     Sys.sleep(10)
   }

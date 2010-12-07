@@ -1,8 +1,8 @@
 
- segue.env <- new.env()
-
+ 
 .onLoad <- function(lib, pkg) {
-    library(rJava)
+    segue.env <- new.env()
+    #library(rJava)
     .jinit()
 
     assign("awsAccessKeyText", Sys.getenv("AWSACCESSKEY"), envir = segue.env)

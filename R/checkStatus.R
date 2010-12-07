@@ -6,7 +6,7 @@ function(jobFlowId){
   
   #require(rjson)
   emrJson <- paste(system(paste("~/EMR/elastic-mapreduce --describe --jobflow ",
-                                jobFlowId, sep=""), intern=T))
+                                jobFlowId, sep=""), intern=TRUE))
   emrJson <- gsub("\\\\", "\\", emrJson) #handle the double escaped text
   parser <- newJSONParser()
     

@@ -4,7 +4,7 @@ function(clusterObject){
   s3TempDir        <- clusterObject$s3TempDir 
   s3TempDirOut     <- clusterObject$s3TempDirOut
   bootStrapLatestR <- clusterObject$bootStrapLatestR
-  verbose          <- T
+  verbose          <- TRUE
   numInstances     <- clusterObject$numInstances
 
  # fire up a cluster
@@ -12,11 +12,11 @@ function(clusterObject){
   emrCall <- paste("~/EMR/elastic-mapreduce --create --stream --name emrFromR ",
                     "--alive ", 
                     "--num-instances ", numInstances, " ", 
-                    if (bootStrapLatestR==T) {paste("--bootstrap-action  s3://",
+                    if (bootStrapLatestR==TRUE) {paste("--bootstrap-action  s3://",
                           s3TempDir, "/bootstrap.sh ", sep="")}, 
                     sep="")
   
-  emrCallReturn <- system(emrCall, intern=T)
+  emrCallReturn <- system(emrCall, intern=TRUE)
   message(emrCallReturn)
   if (substr(emrCallReturn, 1, 16)!= "Created job flow"){
     message(paste("The cluster did not launch properly. The command line was ", emrCall, sep=""))
@@ -27,7 +27,7 @@ function(clusterObject){
   jobFlowId <- substr(emrCallReturn, 18, nchar(emrCallReturn))
 
   while (checkStatus(jobFlowId)$ExecutionStatusDetail$State %in%
-         c("COMPLETED", "FAILED", "TERMINATED", "WAITING", "CANCELLED")  == F) {
+         c("COMPLETED", "FAILED", "TERMINATED", "WAITING", "CANCELLED")  == FALSE) {
     message(paste((checkStatus(jobFlowId)$ExecutionStatusDetail$State), " - ", Sys.time(), sep="" ))
     Sys.sleep(45)
   }
@@ -37,6 +37,6 @@ function(clusterObject){
   }
   
   if (checkStatus(jobFlowId)$ExecutionStatusDetail$State %in%
-         c("COMPLETED", "WAITING")  == T) {return(jobFlowId)}
+         c("COMPLETED", "WAITING")  == TRUE) {return(jobFlowId)}
 }
 

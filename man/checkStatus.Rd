@@ -5,8 +5,7 @@
 Check the status of an EMR Job
 }
 \description{
-Sends a request to EMR and returns the status of a job. checkStatus()
-only checks the status once. 
+Sends a request to EMR and returns the status of a job. 
 }
 \usage{
 checkStatus(jobFlowId)
@@ -31,4 +30,4 @@ James "JD" Long
 getFinalStatus()
 }
 
-}
+
