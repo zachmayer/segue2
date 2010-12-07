@@ -8,7 +8,7 @@
     assign("awsAccessKeyText", Sys.getenv("AWSACCESSKEY"), envir = segue.env)
     assign("awsSecretKeyText", Sys.getenv("AWSSECRETKEY"), envir = segue.env)
     # gotta fix this path
-    pathToSdk <- paste(system.file(package = "segue") , "/inst/aws-java-sdk/", sep="")
+    pathToSdk <- paste(system.file(package = "segue") , "/aws-java-sdk/", sep="")
 
     .jaddClassPath(paste(pathToSdk, "lib/aws-java-sdk-1.1.0.jar", sep=""))
     .jaddClassPath(paste(pathToSdk, "third-party/commons-logging-1.1.1/commons-logging-1.1.1.jar", sep=""))
@@ -17,5 +17,8 @@
 
     attach( javaImport( "java.lang" ) )
     attach( javaImport( "java.io" ) )
+    awsCreds <- new(com.amazonaws.auth.BasicAWSCredentials, get("awsAccessKeyText", envir = segue.env),
+                    get("awsSecretKeyText", envir = segue.env))
+
 }
 
