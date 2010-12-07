@@ -1,3 +1,19 @@
+
+
+#' Converts an R list into a text CSV.
+#' Serializes each element of an R list into ASCII characters then encodes then
+#' for use as the input to a Hadoop Streaming job.
+#' 
+
+#' 
+#' @param inList
+#' @param outFileName
+#' @return creates a CSV to file but returns nothing. 
+#' @author James "JD" Long
+#' @seealso csvToList
+#' 
+#' 
+#' 
 listToCsv <-
 function(inList, outFileName){
   #require(caTools)

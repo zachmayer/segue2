@@ -1,3 +1,18 @@
+
+
+#' Parallel lapply() function using Amazon's EMR service.
+#'
+#' Parallel lapply() function for applying a function to every item in a list
+#' using Amazon's EMR service.
+#' 
+#' 
+#' @param X
+#' @param FUN
+#' @param clusterObject
+#' @param \dots
+#' @return Output as a list
+#' 
+#' 
 emrlapply <-
 function(X, FUN, clusterObject, ... ) {
  

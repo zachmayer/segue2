@@ -1,3 +1,14 @@
+
+
+#' Submits a job to a running cluster
+#' Submits a job to a running cluster
+#' 
+
+#' 
+#' @param clusterObject
+#' @return Execution status of a job
+#' 
+#' 
 submitJob <-
 function(clusterObject){
   jobFlowId    <- clusterObject$jobFlowId

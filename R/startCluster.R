@@ -1,3 +1,15 @@
+
+
+#' Starts a cluster on Amazon's EMR service
+#' After a cluster has been defined with createCluster() this function actually
+#' starts the machines running.
+#' 
+
+#' 
+#' @param clusterObject
+#' @return a Job Flow ID
+#' 
+#' 
 startCluster <-
 function(clusterObject){
   numInstances     <- clusterObject$numInstances

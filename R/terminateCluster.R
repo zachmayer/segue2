@@ -1,3 +1,14 @@
+
+
+#' Terminates a running clsuter.
+#' Terminates a running clsuter.
+#' 
+
+#' 
+#' @param clusterObject
+#' @param deleteTemp
+#' 
+#' 
 terminateCluster <-
 function(clusterObject, deleteTemp=TRUE){
   system(paste("~/EMR/elastic-mapreduce --terminate --jobflow ", clusterObject$jobFlowId, sep=""), intern=TRUE)
