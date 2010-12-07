@@ -34,7 +34,7 @@
 #' myCluster   <- createCluster(numInstances=2,
 #' bootStrapLatestR=TRUE, cranPackages=c("Hmisc", "plyr"))
 #' }
-#' 
+#' @export
 createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
                           cranPackages=NULL, enableDebugging=FALSE){
   #TODO: add support for different instance sizes

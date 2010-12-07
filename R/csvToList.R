@@ -21,9 +21,8 @@
 #'   listToCsv(myList, "tst.csv")
 #'   all.equal(myList,  csvToList("tst.csv" ))
 #' 
-#' 
-csvToList <-
-function(inFileName){
+#' @export
+csvToList <- function(inFileName){
   #require(caTools)
   linesIn <- readLines(inFileName, n=-1)
   outList <- NULL

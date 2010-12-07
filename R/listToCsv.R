@@ -13,7 +13,7 @@
 #' @seealso csvToList
 #' 
 #' 
-#' 
+#' @export
 listToCsv <-
 function(inList, outFileName){
   #require(caTools)

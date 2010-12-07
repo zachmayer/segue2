@@ -7,7 +7,7 @@
 #' 
 #' @param clusterObject cluster to terminate
 #' @param deleteTemp T/F whether to delete temp files 
-#' 
+#' @export
 #' 
 terminateCluster <-
 function(clusterObject, deleteTemp=TRUE){

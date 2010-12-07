@@ -12,7 +12,7 @@
 #' @param \dots other params to pass to FUN
 #' @return Output as a list
 #' 
-#' 
+#' @export
 emrlapply <-
 function(X, FUN, clusterObject, ... ) {
  

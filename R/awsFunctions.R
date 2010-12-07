@@ -4,6 +4,7 @@
 ##' Returns a warning if bucketName does not exist.
 ##' @param bucketName the bucket to be deleted
 ##' @author James Long
+##' @export
 deleteS3Bucket <- function(bucketName){
   system(paste("s3cmd del --force s3://", bucketName,  "/*", sep=""))
   system(paste("s3cmd rb s3://", bucketName,  "/", sep=""))
@@ -13,7 +14,9 @@ deleteS3Bucket <- function(bucketName){
 ##' Returns a warning if bucketName already exists.
 ##' @param bucketName the bucket to be created
 ##' @author James Long
+##' @export
 makeS3Bucket <- function(bucketName){
+    #awsCreds <- get("awsCreds", envir = segue.env)
     tx       <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
     s3 <- tx$getAmazonS3Client()
     #test if the bucket exists; if not,  make bucket
@@ -27,7 +30,9 @@ makeS3Bucket <- function(bucketName){
 ##' @param bucketName destination bucket
 ##' @param localFile local file to be uploaded
 ##' @author James Long
+##' @export
 uploadS3File <- function(bucketName, localFile){
+    #awsCreds <- get("awsCreds", envir = segue.env)
     tx       <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
     s3 <- tx$getAmazonS3Client()
     fileToUpload <-  new(File, localFile)
@@ -44,6 +49,7 @@ uploadS3File <- function(bucketName, localFile){
 ##' @param cranPackages vector of string names of CRAN packages to load on each cluster node
 ##' @param enableDebugging T/F whether EMR debugging should be enabled
 ##' @author James "JD" Long
+##' @export
 createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
                           cranPackages=NULL, enableDebugging=FALSE){
   #TODO: add support for different instance sizes
@@ -91,6 +97,7 @@ createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
 ##' @param jobFlowId the Job Flow Id of the job to check
 ##' @return Job Status 
 ##' @author James Long
+##' @export
 checkStatus <- function(jobFlowId){
   # this works best if this change mentioned in this article is made
   # http://developer.amazonwebservices.com/connect/thread.jspa?threadID=46583&tstart=60

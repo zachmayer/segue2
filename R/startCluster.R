@@ -9,7 +9,7 @@
 #' @param clusterObject cluster object to start
 #' @return a Job Flow ID
 #' 
-#' 
+#' @export
 startCluster <-
 function(clusterObject){
   numInstances     <- clusterObject$numInstances

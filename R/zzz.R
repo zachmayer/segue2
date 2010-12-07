@@ -1,10 +1,9 @@
 
- 
+##'  @import rJava
 .onLoad <- function(lib, pkg) {
     segue.env <- new.env()
     #library(rJava)
     .jinit()
-
     assign("awsAccessKeyText", Sys.getenv("AWSACCESSKEY"), envir = segue.env)
     assign("awsSecretKeyText", Sys.getenv("AWSSECRETKEY"), envir = segue.env)
     # gotta fix this path
@@ -17,8 +16,10 @@
 
     attach( javaImport( "java.lang" ) )
     attach( javaImport( "java.io" ) )
+   
     awsCreds <- new(com.amazonaws.auth.BasicAWSCredentials, get("awsAccessKeyText", envir = segue.env),
                     get("awsSecretKeyText", envir = segue.env))
-
+    assign("awsCreds", awsCreds, envir = .GlobalEnv)
+    packageStartupMessage( "Segue is loaded." )
 }
 

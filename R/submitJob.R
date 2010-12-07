@@ -8,7 +8,7 @@
 #' @param clusterObject cluster to submit to
 #' @return Execution status of a job
 #' 
-#' 
+#' @export
 submitJob <-
 function(clusterObject){
   jobFlowId    <- clusterObject$jobFlowId
