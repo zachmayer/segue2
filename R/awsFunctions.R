@@ -2,7 +2,7 @@
 ##' AWS Support Function: Delete an S3 Bucket
 ##'
 ##' Returns a warning if bucketName does not exist.
-##' @param bucketName 
+##' @param bucketName the bucket to be deleted
 ##' @author James Long
 deleteS3Bucket <- function(bucketName){
   system(paste("s3cmd del --force s3://", bucketName,  "/*", sep=""))
@@ -11,7 +11,7 @@ deleteS3Bucket <- function(bucketName){
 ##' AWS Support Function: Creates an S3 Bucket
 ##'
 ##' Returns a warning if bucketName already exists.
-##' @param bucketName 
+##' @param bucketName the bucket to be created
 ##' @author James Long
 makeS3Bucket <- function(bucketName){
     tx       <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
@@ -24,8 +24,8 @@ makeS3Bucket <- function(bucketName){
 ##' AWS Support Function: Uploads a local file to an S3 Bucket
 ##'
 ##' If buckName does not exist, it is created and a warning is issued. 
-##' @param bucketName 
-##' @param localFile 
+##' @param bucketName destination bucket
+##' @param localFile local file to be uploaded
 ##' @author James Long
 uploadS3File <- function(bucketName, localFile){
     tx       <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
@@ -39,11 +39,11 @@ uploadS3File <- function(bucketName, localFile){
 ##' AWS Support Function: Creates a Hadoop cluster on Elastic Map Reduce.
 ##'
 ##' The the needed files are uploaded to S3 and the EMR nodes are started.
-##' @param numInstances 
-##' @param bootStrapLatestR 
-##' @param cranPackages 
-##' @param enableDebugging 
-##' @author James Long
+##' @param numInstances number of nodes (EC2 instances)
+##' @param bootStrapLatestR T/F whether or not to load the latest R from CRAN
+##' @param cranPackages vector of string names of CRAN packages to load on each cluster node
+##' @param enableDebugging T/F whether EMR debugging should be enabled
+##' @author James "JD" Long
 createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
                           cranPackages=NULL, enableDebugging=FALSE){
   #TODO: add support for different instance sizes
@@ -88,8 +88,8 @@ createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
 ##' AWS Support Function: Checks the status of a given job on EMR
 ##'
 ##' Checks the status of a previously issued job.
-##' @param jobFlowId 
-##' @return Job Status
+##' @param jobFlowId the Job Flow Id of the job to check
+##' @return Job Status 
 ##' @author James Long
 checkStatus <- function(jobFlowId){
   # this works best if this change mentioned in this article is made

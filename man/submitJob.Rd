@@ -5,4 +5,4 @@
 \description{Submits a job to a running cluster
 Submits a job to a running cluster}
 \value{Execution status of a job}
-\arguments{\item{clusterObject}{}}
+\arguments{\item{clusterObject}{cluster to submit to}}

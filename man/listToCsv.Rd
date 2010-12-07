@@ -8,5 +8,5 @@ for use as the input to a Hadoop Streaming job.}
 \value{creates a CSV to file but returns nothing.}
 \author{James "JD" Long}
 \seealso{csvToList}
-\arguments{\item{inList}{}
-\item{outFileName}{}}
+\arguments{\item{inList}{list to convert to CSV}
+\item{outFileName}{file name of resulting CSV file}}

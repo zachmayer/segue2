@@ -6,7 +6,7 @@
 \details{Parallel lapply() function for applying a function to every item in a list
 using Amazon's EMR service.}
 \value{Output as a list}
-\arguments{\item{X}{}
-\item{FUN}{}
-\item{clusterObject}{}
-\item{\dots}{}}
+\arguments{\item{X}{list to which the function will be applied}
+\item{FUN}{function to apply}
+\item{clusterObject}{cluster on which to run the process}
+\item{\dots}{other params to pass to FUN}}

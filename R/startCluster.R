@@ -6,7 +6,7 @@
 #' 
 
 #' 
-#' @param clusterObject
+#' @param clusterObject cluster object to start
 #' @return a Job Flow ID
 #' 
 #' 

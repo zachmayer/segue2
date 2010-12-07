@@ -5,7 +5,7 @@
 #' 
 
 #' 
-#' @param clusterObject
+#' @param clusterObject cluster to submit to
 #' @return Execution status of a job
 #' 
 #' 

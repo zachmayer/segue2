@@ -5,8 +5,8 @@
 #' 
 
 #' 
-#' @param clusterObject
-#' @param deleteTemp
+#' @param clusterObject cluster to terminate
+#' @param deleteTemp T/F whether to delete temp files 
 #' 
 #' 
 terminateCluster <-

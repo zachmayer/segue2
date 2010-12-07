@@ -1,5 +1,5 @@
 #' Check the status of an EMR Job
-#' Sends a request to EMR and returns the status of a job.
+#' Sends a request to EMR and returns the status of a job. 
 #' 
 #' 
 #' @param jobFlowId The jobFlowId is an EMR convention of a given job. This is

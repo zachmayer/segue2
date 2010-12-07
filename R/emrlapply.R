@@ -6,10 +6,10 @@
 #' using Amazon's EMR service.
 #' 
 #' 
-#' @param X
-#' @param FUN
-#' @param clusterObject
-#' @param \dots
+#' @param X list to which the function will be applied
+#' @param FUN function to apply
+#' @param clusterObject cluster on which to run the process
+#' @param \dots other params to pass to FUN
 #' @return Output as a list
 #' 
 #' 

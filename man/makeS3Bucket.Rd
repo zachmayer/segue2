@@ -5,4 +5,4 @@
 \description{AWS Support Function: Creates an S3 Bucket}
 \details{Returns a warning if bucketName already exists.}
 \author{James Long}
-\arguments{\item{bucketName}{}}
+\arguments{\item{bucketName}{the bucket to be created}}

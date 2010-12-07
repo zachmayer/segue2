@@ -6,4 +6,4 @@
 After a cluster has been defined with createCluster() this function actually
 starts the machines running.}
 \value{a Job Flow ID}
-\arguments{\item{clusterObject}{}}
+\arguments{\item{clusterObject}{cluster object to start}}

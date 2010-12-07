@@ -6,8 +6,8 @@
 #' 
 
 #' 
-#' @param inList
-#' @param outFileName
+#' @param inList list to convert to CSV
+#' @param outFileName file name of resulting CSV file
 #' @return creates a CSV to file but returns nothing. 
 #' @author James "JD" Long
 #' @seealso csvToList
