@@ -4,5 +4,5 @@
 \usage{deleteS3Bucket(bucketName)}
 \description{AWS Support Function: Delete an S3 Bucket}
 \details{Returns a warning if bucketName does not exist.}
-\author{James Long}
+\author{James "JD" Long}
 \arguments{\item{bucketName}{the bucket to be deleted}}

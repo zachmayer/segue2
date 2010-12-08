@@ -5,8 +5,8 @@ Version: 0.01
 Date: 2010-12-08
 Author: James Long
 Maintainer: JD Long <jdlong@gmail.com>
-Depends: R (>= 2.7)
-Imports: rjson, caTools, rJava
+Depends: R (>= 2.7), rJava
+Imports: rjson, caTools
 Description: A segue into parallel processing on Amazon's Web Services.
 License: MIT License
 URL: http://code.google.com/p/segue/

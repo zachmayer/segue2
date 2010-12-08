@@ -1,25 +1,24 @@
 
-##'  @import rJava
+##' @import rJava
 .onLoad <- function(lib, pkg) {
-    segue.env <- new.env()
-    #library(rJava)
-    .jinit()
-    assign("awsAccessKeyText", Sys.getenv("AWSACCESSKEY"), envir = segue.env)
-    assign("awsSecretKeyText", Sys.getenv("AWSSECRETKEY"), envir = segue.env)
-    # gotta fix this path
+
     pathToSdk <- paste(system.file(package = "segue") , "/aws-java-sdk/", sep="")
 
-    .jaddClassPath(paste(pathToSdk, "lib/aws-java-sdk-1.1.0.jar", sep=""))
-    .jaddClassPath(paste(pathToSdk, "third-party/commons-logging-1.1.1/commons-logging-1.1.1.jar", sep=""))
-    .jaddClassPath(paste(pathToSdk, "third-party/commons-httpclient-3.0.1/commons-httpclient-3.0.1.jar", sep=""))
-    .jaddClassPath(paste(pathToSdk, "third-party/commons-codec-1.3/commons-codec-1.3.jar", sep=""))
+    jarPaths <- c(paste(pathToSdk, "lib/aws-java-sdk-1.1.0.jar", sep=""),
+                  paste(pathToSdk, "third-party/commons-logging-1.1.1/commons-logging-1.1.1.jar", sep=""),
+                  paste(pathToSdk, "third-party/commons-httpclient-3.0.1/commons-httpclient-3.0.1.jar", sep=""),
+                  paste(pathToSdk, "third-party/commons-codec-1.3/commons-codec-1.3.jar", sep="")
+                  )
+    .jpackage(pkg, morePaths=jarPaths)
+    # attach( javaImport( c("java.lang", "java.io"), pos = length( search() ), name = "java" ))
+    attach( javaImport( c("java.lang", "java.io")))
+    
+    if (Sys.getenv("AWSACCESSKEY") != "" && Sys.getenv("AWSSECRETKEY") != ""){
+      awsCreds <- new(com.amazonaws.auth.BasicAWSCredentials, Sys.getenv("AWSACCESSKEY"), Sys.getenv("AWSSECRETKEY"))
+      assign("awsCreds", awsCreds, envir = .GlobalEnv)
+      packageStartupMessage( "Segue has loaded your AWS Credentials." )
+     } else {
+       packageStartupMessage( "Segue did not find your AWS credentials." )
+     }
 
-    attach( javaImport( "java.lang" ) )
-    attach( javaImport( "java.io" ) )
-   
-    awsCreds <- new(com.amazonaws.auth.BasicAWSCredentials, get("awsAccessKeyText", envir = segue.env),
-                    get("awsSecretKeyText", envir = segue.env))
-    assign("awsCreds", awsCreds, envir = .GlobalEnv)
-    packageStartupMessage( "Segue is loaded." )
 }
-
