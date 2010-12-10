@@ -57,14 +57,12 @@ createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
   clusterObject$s3TempDirOut <- s3TempDirOut
 
   #create the s3 bucket
-  system(paste("s3cmd mb s3://",
-               s3TempDir, sep=""))
+  makeS3Bucket(s3TempDir)
   
   #upload the bootstrapper to S3 if needed
   #how do I do this in a package? Right now this is hard coded
   if (bootStrapLatestR==TRUE) {
-    system(paste("s3cmd put ", system.file("bootstrap.sh", package="emrlapply")," s3://",
-               s3TempDir,  "/bootstrap.sh" , sep=""))
+    uploadS3File(s3TempDir, system.file("bootstrap.sh", package="emrlapply"))
   }
   clusterObject$bootStrapLatestR <- bootStrapLatestR
   

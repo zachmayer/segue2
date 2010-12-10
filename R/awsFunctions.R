@@ -1,4 +1,7 @@
-##' AWS Support Function: set up credentials
+# Lower logging level: LogManager.getLogManager().getLogger("com.amazonaws.request").setLevel(Level.OFF);
+# ref: https://forums.aws.amazon.com/thread.jspa?messageID=186655&#186655
+
+##' ##' AWS Support Function: set up credentials
 ##'
 ##' sets up the credentials needed to access AWS and optionally sets environment
 ##' variables for auto loading of credentials in the future
@@ -9,21 +12,6 @@
 ##' @author James "JD" Long
 ##' @export
 setCredentials <- function(awsAccessKeyText, awsSecretKeyText, setEnvironmentVariables = TRUE){
-    #  .jinit()
-    #  pathToSdk <- paste(system.file(package = "segue") , "/aws-java-sdk/", sep="")
-    #  jarPaths <- c(paste(pathToSdk, "lib/aws-java-sdk-1.1.0.jar", sep=""),
-    #              paste(pathToSdk, "third-party/commons-logging-1.1.1/commons-logging-1.1.1.jar", sep=""),
-    #              paste(pathToSdk, "third-party/commons-httpclient-3.0.1/commons-httpclient-3.0.1.jar", sep=""),
-    #              paste(pathToSdk, "third-party/commons-codec-1.3/commons-codec-1.3.jar", sep="")
-    #              )
-    #  .jaddClassPath(jarPaths)
-    #.jaddClassPath(paste(pathToSdk, "lib/aws-java-sdk-1.1.0.jar", sep=""))
-    #.jaddClassPath(paste(pathToSdk, "third-party/commons-logging-1.1.1/commons-logging-1.1.1.jar", sep=""))
-    #.jaddClassPath(paste(pathToSdk, "third-party/commons-httpclient-3.0.1/commons-httpclient-3.0.1.jar", sep=""))
-    #.jaddClassPath(paste(pathToSdk, "third-party/commons-codec-1.3/commons-codec-1.3.jar", sep=""))
-    #attach( javaImport( "java.lang" ) )
-    #attach( javaImport( "java.io" ) )
-    #  awsCreds <- new(com.amazonaws.auth.BasicAWSCredentials, Sys.getenv("AWSACCESSKEY"), Sys.getenv("AWSSECRETKEY"))
     awsCreds <- new(com.amazonaws.auth.BasicAWSCredentials, awsAccessKeyText, awsSecretKeyText)
     assign("awsCreds", awsCreds, envir = .GlobalEnv)
 
@@ -44,17 +32,44 @@ deleteS3Key <- function(bucketName, keyName){
   s3$deleteObject(bucketName, keyName)
 }
 
+##' AWS Support Function: Empty an S3 bucket
+##'
+##' Deletes all keys in the designated bucket
+##' @param bucketName Name of the bucket to be emptied
+##' @author James "JD" Long
+##' @export
+emptyS3Bucket <- function(bucketName){
+  tx <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
+  s3 <- tx$getAmazonS3Client()
+  
+  lst <- s3$listObjects(bucketName)
+  objSums <- lst$getObjectSummaries()
+  listJavaObjs <- .jevalArray(objSums$toArray())
+
+  for (i in 1:length(listJavaObjs)) {
+    deleteS3Key(bucketName, listJavaObjs[[i]]$getKey()[[1]])
+    #print(listJavaObjs[[i]]$getKey()[[1]])
+  }
+  if (lst$isTruncated()){
+    #recursion FTW!
+    emptyS3Bucket(bucketName)
+  }
+}
+
 
 ##' AWS Support Function: Delete an S3 Bucket
 ##'
-##' Returns a warning if bucketName does not exist.
+##' Returns a warning if bucketName does not exist. If bucket contains Keys, all keys are deleted.
 ##' @param bucketName the bucket to be deleted
 ##' @author James "JD" Long
 ##' @export
 deleteS3Bucket <- function(bucketName){
-  system(paste("s3cmd del --force s3://", bucketName,  "/*", sep=""))
-  system(paste("s3cmd rb s3://", bucketName,  "/", sep=""))
+  emptyS3Bucket(bucketName)
+  tx <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
+  s3 <- tx$getAmazonS3Client()
+  s3$deleteBucket(bucketName)
 }
+
 ##' AWS Support Function: Creates an S3 Bucket
 ##'
 ##' Returns a warning if bucketName already exists.
@@ -81,12 +96,41 @@ makeS3Bucket <- function(bucketName){
 ##' @author James "JD" Long
 ##' @export
 uploadS3File <- function(bucketName, localFile){
-    #awsCreds <- get("awsCreds", envir = segue.env)
     tx <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
     s3 <- tx$getAmazonS3Client()
     fileToUpload <-  new(File, localFile)
     request <- new(com.amazonaws.services.s3.model.PutObjectRequest, bucketName, fileToUpload$getName(), fileToUpload)
     s3$putObject(request)
+}
+
+##' AWS Support Function: Uploads a local file to an S3 Bucket
+##'
+##' If buckName does not exist, it is created and a warning is issued. 
+##' @param bucketName destination bucket
+##' @param localFile local file to be uploaded
+##' @author James "JD" Long
+##' @export
+downloadS3File <- function(bucketName, keyName, localFile){
+    tx <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
+    s3 <- tx$getAmazonS3Client()
+
+    if (1==2){ ## keep this from accidentally running
+    #fileToUpload <-  new(File, localFile)
+    ### testing !!!!!!!!!!!!!!!!!!
+    bucketName <- "rdata"
+    keyName <- "agroData.RData"
+    request <- new(com.amazonaws.services.s3.model.GetObjectRequest, bucketName, keyName)
+    
+    myFile <- new(file, "/tmp/file.tst")
+
+    theObject <- s3$getObject(request, new(file, "/tmp/file.tst"))
+   
+    content <- theObject$getObjectContent()
+
+    inputStreamReader <- (new(InputStreamReader, content))
+  } 
+    
+    #s3$putObject(request)
 }
 
 ##' AWS Support Function: Creates a Hadoop cluster on Elastic Map Reduce.
@@ -123,20 +167,19 @@ createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
   makeS3Bucket(s3TempDir)
   
   #upload the bootstrapper to S3 if needed
-  #how do I do this in a package? Right now this is hard coded
   if (bootStrapLatestR==TRUE) {
     uploadS3File(system.file("bootstrap.sh", package="segue"), s3TempDir )
   }
   clusterObject$bootStrapLatestR <- bootStrapLatestR
   
   # start cluster
-  #jobFlowId <- startCluster(numInstances, s3TempDir, s3TempDirOut, bootstrapLatestR)
   jobFlowId <- startCluster(clusterObject)
   
   clusterObject$jobFlowId <- jobFlowId
   
   return(clusterObject)
 }
+
 ##' AWS Support Function: Checks the status of a given job on EMR
 ##'
 ##' Checks the status of a previously issued job.

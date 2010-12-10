@@ -8,6 +8,7 @@
                   paste(pathToSdk, "third-party/commons-logging-1.1.1/commons-logging-1.1.1.jar", sep=""),
                   paste(pathToSdk, "third-party/commons-httpclient-3.0.1/commons-httpclient-3.0.1.jar", sep=""),
                   paste(pathToSdk, "third-party/commons-codec-1.3/commons-codec-1.3.jar", sep="")
+                  paste(pathToSdk, "third-party/jets3t-0.8.0.jar", sep="")
                   )
     .jpackage(pkg, morePaths=jarPaths)
     # attach( javaImport( c("java.lang", "java.io"), pos = length( search() ), name = "java" ))
@@ -20,5 +21,4 @@
      } else {
        packageStartupMessage( "Segue did not find your AWS credentials." )
      }
-
 }

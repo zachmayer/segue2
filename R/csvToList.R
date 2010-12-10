@@ -1,5 +1,3 @@
-
-
 #' The inverse of the listToCsv() function
 #' Takes a csv of serialized objects created by the listToCSV function and
 #' turns it into a proper R list.

@@ -13,9 +13,7 @@
 #' @return Output as a list
 #' 
 #' @export
-emrlapply <-
-function(X, FUN, clusterObject, ... ) {
- 
+emrlapply <- function(X, FUN, clusterObject, ... ) {
   #set up a local temp directory
   myTempDir <- clusterObject$localTempDir
 
@@ -33,32 +31,26 @@ function(X, FUN, clusterObject, ... ) {
        file = objectsFileName,
        compress="xz")
 
-  #delete the contents of the s3TempDir and s3TempDirOut
+  #make sure the buckets exist, and that they are empty
+  makeS3Bucket(s3TempDir)
+  makeS3Bucket(s3TempDirOut)
   
-  s3TempDir <- clusterObject$s3TempDir
-  system(paste("s3cmd del --force s3://", s3TempDir,  "/*", sep=""))
-  system(paste("s3cmd mb  s3://", s3TempDir,  "/", sep=""))
-  
-  s3TempDirOut <- clusterObject$s3TempDirOut
-  system(paste("s3cmd del --force s3://", s3TempDirOut,  "/*", sep=""))
-  system(paste("s3cmd rb s3://", s3TempDirOut,  "/", sep=""))
+  emptyS3Bucket(s3TempDir)
+  emptyS3Bucket(s3TempDirOut)
   
   #upload the datafile to S3
-  system(paste("s3cmd put ", objectsFileName , " s3://", s3TempDir, 
-              "/emrData.RData" , sep=""))
-  
+  uploadS3File(s3TempDir, paste(objectsFileName, "/emrData.RData" , sep=""))
+    
   #upload the mapper to S3
   #needs to be altered for a package
-  system(paste("s3cmd put ", system.file("mapper.R", package="emrlapply")," s3://",
-               s3TempDir,  "/mapper.R" , sep=""))
-  
+  uploadS3File(s3TempDir, system.file("mapper.R", package="emrlapply"))
+
   #serialize the X list to a temp file
   streamFile <- paste(myTempDir, "/stream.txt", sep="")
   listToCsv(X, streamFile)
   
   #now upload stream.txt to EMR
-  system(paste("s3cmd put ", streamFile , " s3://", s3TempDir, 
-               "/stream.txt" , sep=""))
+  uploadS3File(s3TempDir, streamFile)
   
   finalStatus <- submitJob(clusterObject) 
   myTempDirOut <- clusterObject$localTempDirOut
@@ -66,6 +58,7 @@ function(X, FUN, clusterObject, ... ) {
   if (finalStatus %in% c("COMPLETED", "WAITING")) {
     system(paste("mkdir ", myTempDirOut, sep="" ))
     system(paste("rm ", myTempDirOut, "/*", sep=""))
+    
     system(paste("s3cmd get  s3://", s3TempDirOut, 
               "/* ", myTempDirOut, "/", sep=""))
 
