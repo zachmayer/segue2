@@ -107,6 +107,7 @@ uploadS3File <- function(bucketName, localFile){
 ##'
 ##' If buckName does not exist, it is created and a warning is issued. 
 ##' @param bucketName destination bucket
+##' @param keyName key to download
 ##' @param localFile local file to be uploaded
 ##' @author James "JD" Long
 ##' @export
@@ -114,24 +115,9 @@ downloadS3File <- function(bucketName, keyName, localFile){
     tx <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
     s3 <- tx$getAmazonS3Client()
 
-    if (1==2){ ## keep this from accidentally running
-    #fileToUpload <-  new(File, localFile)
-    ### testing !!!!!!!!!!!!!!!!!!
-    bucketName <- "rdata"
-    keyName <- "agroData.RData"
     request <- new(com.amazonaws.services.s3.model.GetObjectRequest, bucketName, keyName)
-    
-    myFile <- new(file, "/tmp/file.tst")
-
-    theObject <- s3$getObject(request, new(file, "/tmp/file.tst"))
-   
-    content <- theObject$getObjectContent()
-
-    inputStreamReader <- (new(InputStreamReader, content))
-  } 
-    
-    #s3$putObject(request)
-}
+    theObject <- s3$getObject(request, new(java.io.File, localFile))
+  }
 
 ##' AWS Support Function: Creates a Hadoop cluster on Elastic Map Reduce.
 ##'
@@ -204,3 +190,147 @@ checkStatus <- function(jobFlowId){
     
   return(parser$getObject()[[1]][[1]])
 }
+
+
+##' Starts a cluster on Amazon's EMR service
+##' After a cluster has been defined with createCluster() this function actually
+##' starts the machines running.
+##' 
+##' @param clusterObject cluster object to start
+##' @return a Job Flow ID
+##' 
+##' @export
+startCluster <- function(clusterObject){
+  numInstances     <- clusterObject$numInstances
+  s3TempDir        <- clusterObject$s3TempDir 
+  s3TempDirOut     <- clusterObject$s3TempDirOut
+  bootStrapLatestR <- clusterObject$bootStrapLatestR
+  verbose          <- TRUE
+  numInstances     <- clusterObject$numInstances
+
+  tx <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
+  s3 <- tx$getAmazonS3Client()
+
+  # following along frome this example:
+  # http://www.cs.indiana.edu/~cherath/java/RunJobFlowSample.java
+  JFIConfig <- new(com.amazonaws.services.elasticmapreduce.model.JobFlowInstancesConfig)
+  JFIConfig$setInstanceCount(new(Integer, "2"))
+  JFIConfig$setKeepJobFlowAliveWhenNoSteps(new(Boolean, TRUE))
+  JFIConfig$setMasterInstanceType("m1.small")
+  JFIConfig$setPlacement(new(com.amazonaws.services.elasticmapreduce.model.PlacementType,"us-east-1a"))
+
+  request   <- new(com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest, "RJobFlow", JFIConfig)
+  request$setLogUri(paste("s3://", s3TempDir, "/logs ", sep="")) # may need to make the log bucket
+
+  bootStrapList <- new(java.util.LinkedList)
+  bootStrapList$add(paste("s3://", s3TempDir, "/bootstrap.sh ", sep=""))
+  request$setBootstrapActions(bootStrapList)
+  
+  stepConfig <- new(com.amazonaws.services.elasticmapreduce.model.StepConfig)
+  stepConfig$setActionOnFailure("CANCEL_AND_WAIT")
+  
+  jarsetup = new(com.amazonaws.services.elasticmapreduce.model.HadoopJarStepConfig)
+
+  arguments <- new(java.util.LinkedList)
+  #this arguments don't seem right. Need to review docs
+  #for streaming I'm not sure where to put the arguments
+  arguments$add(paste("s3://", s3TempDir, "/inputs ", sep=""))
+  arguments$add(paste("s3://", s3TempDir, "/outputs ", sep=""))
+  
+  jarsetup$setArgs(arguments)
+  jarsetup$setJar("/home/hadoop/contrib/streaming/hadoop-0.18-streaming.jar")
+ 
+  stepConfig$setHadoopJarStep(jarsetup)
+
+  #commented out the steps since I just want to start the cluster not run steps
+  #stepConfig$setName(stepname)
+  #steps$add(stepConfig)
+  #request$setSteps(steps)
+  invokeRunJobFlow(service, request)
+
+  new(com.amazonaws.services.elasticmapreduce.runJobFlow), request)
+  
+  checkStatus(jobFlowId)
+     # loop for some period of time
+     # wait for status to change to "waiting"
+     # if status changes then say "running" otherwise throw an error
+
+ ############ Original non-java API code  
+ # fire up a cluster
+ # returns NA if job fails
+ #  emrCall <- paste("~/EMR/elastic-mapreduce --create --stream --name emrFromR ",
+ #                   "--alive ", 
+ #                   "--num-instances ", numInstances, " ", 
+ #                   if (bootStrapLatestR==TRUE) {paste("--bootstrap-action  s3://",
+ #                         s3TempDir, "/bootstrap.sh ", sep="")}, 
+ #                   sep="")
+ # 
+ # emrCallReturn <- system(emrCall, intern=TRUE)
+ # message(emrCallReturn)
+ # if (substr(emrCallReturn, 1, 16)!= "Created job flow"){
+ #   message(paste("The cluster did not launch properly. The command line was ", emrCall, sep=""))
+ #   return(NA)
+ #   stop()
+ # } 
+ #  jobFlowId <- substr(emrCallReturn, 18, nchar(emrCallReturn))
+ #
+ # while (checkStatus(jobFlowId)$ExecutionStatusDetail$State %in%
+ #        c("COMPLETED", "FAILED", "TERMINATED", "WAITING", "CANCELLED")  == FALSE) {
+ #   message(paste((checkStatus(jobFlowId)$ExecutionStatusDetail$State), " - ", Sys.time(), sep="" ))
+ #   Sys.sleep(45)
+ # }
+ #
+ # if (checkStatus(jobFlowId)$ExecutionStatusDetail$State == "WAITING") {
+ #   message("Your Amazon EMR Hadoop Cluster is ready for action. \nRemember to terminate your cluster with terminateCluster().\nAmazon is billing you!")
+ # }
+ # 
+ # if (checkStatus(jobFlowId)$ExecutionStatusDetail$State %in%
+ #        c("COMPLETED", "WAITING")  == TRUE) {return(jobFlowId)}
+ ############## End non-java api code
+
+}
+
+##' Submits a job to a running cluster
+##' Submits a job to a running cluster
+##' 
+##' 
+##' @param clusterObject a cluster object to submit to
+##' @return Execution status of this job
+##' 
+##' @export
+submitJob <- function(clusterObject){
+  jobFlowId       <- clusterObject$jobFlowId
+  s3TempDir       <- clusterObject$s3TempDir
+  s3TempDirOut    <- clusterObject$s3TempDirOut
+  enableDebugging <- clusterObject$enableDebugging
+
+  deleteS3Bucket(s3TempDirOut)
+  
+  emrCall <- paste("~/EMR/elastic-mapreduce  --stream ",
+                     " --jobflow ", jobFlowId, 
+                     " --input s3n://", s3TempDir, "/stream.txt",
+                     " --mapper s3n://", s3TempDir, "/mapper.R ",
+                     " --reducer cat ",
+                     " --output s3n://", s3TempDirOut, "/  ", 
+                     " --cache s3n://", s3TempDir, "/emrData.RData#emrData.RData",
+                     if (enableDebugging==TRUE) {" --enable-debugging "} ,
+                   sep="")
+  
+  emrCallReturn <- system(emrCall, intern=TRUE)
+  message(emrCallReturn)
+  if (substr(emrCallReturn, 1, 14)!= "Added steps to"){
+    message(paste("The job did not submit properly. The command line was ", emrCall, sep=""))
+    return("Job Flow Creation Failed")
+    stop()
+  }
+  Sys.sleep(15)
+  if (enableDebugging==TRUE){Sys.sleep(45)} #debugging has to be set up on each job so it takes a bit
+  
+  while (checkStatus(jobFlowId)$ExecutionStatusDetail$State %in%
+         c("COMPLETED", "FAILED", "TERMINATED", "WAITING", "CANCELLED")  == FALSE) {
+    message(paste((checkStatus(jobFlowId)$ExecutionStatusDetail$State), " - ", Sys.time(), sep="" ))
+    Sys.sleep(10)
+  }
+  return(checkStatus(jobFlowId)$ExecutionStatusDetail$State)
+}
+

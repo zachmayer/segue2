@@ -1,10 +1,9 @@
 \name{checkStatus}
 \alias{checkStatus}
-\title{Check the status of an EMR Job...}
+\title{AWS Support Function: Checks the status of a given job on EMR...}
 \usage{checkStatus(jobFlowId)}
-\description{Check the status of an EMR Job
-Sends a request to EMR and returns the status of a job.}
-\value{a string value of the status.}
+\description{AWS Support Function: Checks the status of a given job on EMR}
+\details{Checks the status of a previously issued job.}
+\value{Job Status}
 \author{James "JD" Long}
-\seealso{getFinalStatus()}
-\arguments{\item{jobFlowId}{an EMR convention of a given job. This is an element of a cluster in emrlapply once the cluster has been started.}}
+\arguments{\item{jobFlowId}{the Job Flow Id of the job to check}}
