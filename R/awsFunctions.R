@@ -175,30 +175,13 @@ createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
 ##' @export
 checkStatus <- function(jobFlowId){
 
-
- jfDetails <- new( com.amazonaws.services.elasticmapreduce.model.JobFlowDetail )
-
- result <- new( com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsResult)
- result$setJobFlows()
-
-
-
-
-  # this works best if this change mentioned in this article is made
-  # http://developer.amazonwebservices.com/connect/thread.jspa?threadID=46583&tstart=60
-  # Otherwise I had issues with the request timing out
-  
-  #require(rjson)
-  emrJson <- paste(system(paste("~/EMR/elastic-mapreduce --describe --jobflow ",
-                                jobFlowId, sep=""), intern=TRUE))
-  emrJson <- gsub("\\\\", "\\", emrJson) #handle the double escaped text
-  parser <- newJSONParser()
-    
-  for (i in 1:length(emrJson)){
-      parser$addData(emrJson[i])
-  }
-    
-  return(parser$getObject()[[1]][[1]])
+  service <- new( com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient, awsCreds )
+  request <- new( com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsRequest )
+  detailsList <- new( java.util.ArrayList )
+  detailsList$add(jobFlowId)
+  request$withJobFlowIds(detailsList)
+  descriptions <- as.list(service$describeJobFlows(request)$getJobFlows())
+  descriptions[[1]]$getExecutionStatusDetail()$getState()
 }
 
 
@@ -220,27 +203,34 @@ startCluster <- function(clusterObject){
 
  
   #### testing only ###
-  s3TempDir <- "abc123test"
+  #s3TempDir <- "abc123test"
   ###  testing only ###
 
   service <- new( com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient, awsCreds )
   request <- new( com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest )
   conf    <- new( com.amazonaws.services.elasticmapreduce.model.JobFlowInstancesConfig )
 
-  scriptBootActionConfig <- new(com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig)
-  scriptBootActionConfig$setPath(paste("s3://", s3TempDir, "/bootstrap.sh", sep=""))
-
-  bootStrapConfig <- new( com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig)
-    with( bootStrapConfig, setScriptBootstrapAction(scriptBootActionConfig))
-    with( bootStrapConfig, setName("RBootStrap"))
+  if bootStrapLatestR == TRUE {
+   scriptBootActionConfig <- new(com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig)
+    scriptBootActionConfig$setPath(paste("s3://", s3TempDir, "/bootstrap.sh", sep=""))
   
-  bootStrapList <- new( java.util.ArrayList )
-  bootStrapList$add(bootStrapConfig)
-  request$setBootstrapActions(bootStrapList)
- 
-  ## TODO make keyname an argument
+    bootStrapConfig <- new( com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig)
+      with( bootStrapConfig, setScriptBootstrapAction(scriptBootActionConfig))
+      with( bootStrapConfig, setName("RBootStrap"))
+  
+    bootStrapList <- new( java.util.ArrayList )
+    bootStrapList$add(bootStrapConfig)
+    request$setBootstrapActions(bootStrapList)
+ }
+  
+  ## TODO add the following arguments:
+     # placement location
+     # master instance type
+     # slave instance type
+     # key name
+  
   #conf$setEc2KeyName(myKeyName);
-  conf$setInstanceCount(new(Integer, "2"))
+  conf$setInstanceCount(new(Integer, as.character(numInstances)))
   conf$setKeepJobFlowAliveWhenNoSteps(new(Boolean, TRUE))
   conf$setMasterInstanceType("m1.small")
 
@@ -254,43 +244,37 @@ startCluster <- function(clusterObject){
   result <- service$runJobFlow(request)
   jobFlowId <- result$getJobFlowId()
   
-  checkStatus(jobFlowId)
-     # loop for some period of time
-     # wait for status to change to "waiting"
-     # if status changes then say "running" otherwise throw an error
+  while (checkStatus(jobFlowId)$ExecutionStatusDetail$State %in%
+         c("COMPLETED", "FAILED", "TERMINATED", "WAITING", "CANCELLED")  == FALSE) {
+    message(paste((checkStatus(jobFlowId)$ExecutionStatusDetail$State), " - ", Sys.time(), sep="" ))
+    Sys.sleep(45)
+  }
+ 
+  if (checkStatus(jobFlowId)$ExecutionStatusDetail$State == "WAITING") {
+    message("Your Amazon EMR Hadoop Cluster is ready for action. \nRemember to terminate your cluster with terminateCluster().\nAmazon is billing you!")
+  }
+  
+  if (checkStatus(jobFlowId)$ExecutionStatusDetail$State %in%
+         c("COMPLETED", "WAITING")  == TRUE) {return(jobFlowId)}
+}
 
- ############ Original non-java API code  
- # fire up a cluster
- # returns NA if job fails
- #  emrCall <- paste("~/EMR/elastic-mapreduce --create --stream --name emrFromR ",
- #                   "--alive ", 
- #                   "--num-instances ", numInstances, " ", 
- #                   if (bootStrapLatestR==TRUE) {paste("--bootstrap-action  s3://",
- #                         s3TempDir, "/bootstrap.sh ", sep="")}, 
- #                   sep="")
- # 
- # emrCallReturn <- system(emrCall, intern=TRUE)
- # message(emrCallReturn)
- # if (substr(emrCallReturn, 1, 16)!= "Created job flow"){
- #   message(paste("The cluster did not launch properly. The command line was ", emrCall, sep=""))
- #   return(NA)
- #   stop()
- # } 
- #  jobFlowId <- substr(emrCallReturn, 18, nchar(emrCallReturn))
- #
- # while (checkStatus(jobFlowId)$ExecutionStatusDetail$State %in%
- #        c("COMPLETED", "FAILED", "TERMINATED", "WAITING", "CANCELLED")  == FALSE) {
- #   message(paste((checkStatus(jobFlowId)$ExecutionStatusDetail$State), " - ", Sys.time(), sep="" ))
- #   Sys.sleep(45)
- # }
- #
- # if (checkStatus(jobFlowId)$ExecutionStatusDetail$State == "WAITING") {
- #   message("Your Amazon EMR Hadoop Cluster is ready for action. \nRemember to terminate your cluster with terminateCluster().\nAmazon is billing you!")
- # }
- # 
- # if (checkStatus(jobFlowId)$ExecutionStatusDetail$State %in%
- #        c("COMPLETED", "WAITING")  == TRUE) {return(jobFlowId)}
- ############## End non-java api code
+##' Stops a running cluster
+##'
+##' Stops a running cluster
+##' 
+##' @return not really sure
+##' @author James "JD" Long
+##' @param clusterObject a cluster object to stop
+##' @export
+stopCluster <- function(clusterObject){
+  jobFlowId <- clusterObject$jobFlowId
+
+  service <- new( com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient, awsCreds )
+  request <- new( com.amazonaws.services.elasticmapreduce.model.TerminateJobFlowsRequest )
+  detailsList <- new( java.util.ArrayList )
+  detailsList$add(jobFlowId)
+  request$withJobFlowIds(detailsList)
+  service$terminateJobFlows(request)
 
 }
 
