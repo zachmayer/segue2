@@ -137,7 +137,7 @@ createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
                         enableDebugging=enableDebugging,
                         bootStrapLatestR=bootStrapLatestR)
   
-  localTempDir <- tempdir()
+  localTempDir <- paste(tempdir(), paste(sample(c(0:9, letters), 10, rep=T), collapse=""), sep="")
   clusterObject$localTempDir <- localTempDir
   clusterObject$localTempDirOut <- paste(localTempDir, "/out", sep="")
   
@@ -174,6 +174,16 @@ createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
 ##' @author James "JD" Long
 ##' @export
 checkStatus <- function(jobFlowId){
+
+
+ jfDetails <- new( com.amazonaws.services.elasticmapreduce.model.JobFlowDetail )
+
+ result <- new( com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsResult)
+ result$setJobFlows()
+
+
+
+
   # this works best if this change mentioned in this article is made
   # http://developer.amazonwebservices.com/connect/thread.jspa?threadID=46583&tstart=60
   # Otherwise I had issues with the request timing out
@@ -208,47 +218,41 @@ startCluster <- function(clusterObject){
   verbose          <- TRUE
   numInstances     <- clusterObject$numInstances
 
-  tx <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
-  s3 <- tx$getAmazonS3Client()
-
-  # following along frome this example:
-  # http://www.cs.indiana.edu/~cherath/java/RunJobFlowSample.java
-  JFIConfig <- new(com.amazonaws.services.elasticmapreduce.model.JobFlowInstancesConfig)
-  JFIConfig$setInstanceCount(new(Integer, "2"))
-  JFIConfig$setKeepJobFlowAliveWhenNoSteps(new(Boolean, TRUE))
-  JFIConfig$setMasterInstanceType("m1.small")
-  JFIConfig$setPlacement(new(com.amazonaws.services.elasticmapreduce.model.PlacementType,"us-east-1a"))
-
-  request   <- new(com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest, "RJobFlow", JFIConfig)
-  request$setLogUri(paste("s3://", s3TempDir, "/logs ", sep="")) # may need to make the log bucket
-
-  bootStrapList <- new(java.util.LinkedList)
-  bootStrapList$add(paste("s3://", s3TempDir, "/bootstrap.sh ", sep=""))
-  request$setBootstrapActions(bootStrapList)
-  
-  stepConfig <- new(com.amazonaws.services.elasticmapreduce.model.StepConfig)
-  stepConfig$setActionOnFailure("CANCEL_AND_WAIT")
-  
-  jarsetup = new(com.amazonaws.services.elasticmapreduce.model.HadoopJarStepConfig)
-
-  arguments <- new(java.util.LinkedList)
-  #this arguments don't seem right. Need to review docs
-  #for streaming I'm not sure where to put the arguments
-  arguments$add(paste("s3://", s3TempDir, "/inputs ", sep=""))
-  arguments$add(paste("s3://", s3TempDir, "/outputs ", sep=""))
-  
-  jarsetup$setArgs(arguments)
-  jarsetup$setJar("/home/hadoop/contrib/streaming/hadoop-0.18-streaming.jar")
  
-  stepConfig$setHadoopJarStep(jarsetup)
+  #### testing only ###
+  s3TempDir <- "abc123test"
+  ###  testing only ###
 
-  #commented out the steps since I just want to start the cluster not run steps
-  #stepConfig$setName(stepname)
-  #steps$add(stepConfig)
-  #request$setSteps(steps)
-  invokeRunJobFlow(service, request)
+  service <- new( com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient, awsCreds )
+  request <- new( com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest )
+  conf    <- new( com.amazonaws.services.elasticmapreduce.model.JobFlowInstancesConfig )
 
-  new(com.amazonaws.services.elasticmapreduce.runJobFlow), request)
+  scriptBootActionConfig <- new(com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig)
+  scriptBootActionConfig$setPath(paste("s3://", s3TempDir, "/bootstrap.sh", sep=""))
+
+  bootStrapConfig <- new( com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig)
+    with( bootStrapConfig, setScriptBootstrapAction(scriptBootActionConfig))
+    with( bootStrapConfig, setName("RBootStrap"))
+  
+  bootStrapList <- new( java.util.ArrayList )
+  bootStrapList$add(bootStrapConfig)
+  request$setBootstrapActions(bootStrapList)
+ 
+  ## TODO make keyname an argument
+  #conf$setEc2KeyName(myKeyName);
+  conf$setInstanceCount(new(Integer, "2"))
+  conf$setKeepJobFlowAliveWhenNoSteps(new(Boolean, TRUE))
+  conf$setMasterInstanceType("m1.small")
+
+  conf$setPlacement(new(com.amazonaws.services.elasticmapreduce.model.PlacementType, "us-east-1a"))
+  conf$setSlaveInstanceType("m1.small")
+  request$setInstances(conf)
+  request$setLogUri(paste("s3://", s3TempDir, "/logs ", sep=""))
+  jobFlowName <- paste("RJob-", date(), sep="")
+  request$setName(jobFlowName)
+
+  result <- service$runJobFlow(request)
+  jobFlowId <- result$getJobFlowId()
   
   checkStatus(jobFlowId)
      # loop for some period of time
