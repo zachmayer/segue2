@@ -41,33 +41,40 @@ deleteS3Key <- function(bucketName, keyName){
 emptyS3Bucket <- function(bucketName){
   tx <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
   s3 <- tx$getAmazonS3Client()
-  
-  lst <- s3$listObjects(bucketName)
-  objSums <- lst$getObjectSummaries()
-  listJavaObjs <- .jevalArray(objSums$toArray())
 
-  for (i in 1:length(listJavaObjs)) {
-    deleteS3Key(bucketName, listJavaObjs[[i]]$getKey()[[1]])
-    #print(listJavaObjs[[i]]$getKey()[[1]])
-  }
-  if (lst$isTruncated()){
-    #recursion FTW!
-    emptyS3Bucket(bucketName)
+  ## need a check to see if the bucket exists, and if not, just be done
+  ## TODO: need a check to make sure the current user owns the bucket
+  ##       before trying to delete everything in it
+  if s3$doesBucketExist(bucketName) {  
+    lst <- s3$listObjects(bucketName)
+    objSums <- lst$getObjectSummaries()
+    listJavaObjs <- .jevalArray(objSums$toArray())
+
+    for (i in 1:length(listJavaObjs)) {
+      deleteS3Key(bucketName, listJavaObjs[[i]]$getKey()[[1]])
+      #print(listJavaObjs[[i]]$getKey()[[1]])
+    }
+    if (lst$isTruncated()){
+      #recursion FTW!
+      emptyS3Bucket(bucketName)
+    }
   }
 }
 
 
 ##' AWS Support Function: Delete an S3 Bucket
 ##'
-##' Returns a warning if bucketName does not exist. If bucket contains Keys, all keys are deleted.
+##' Does nothing if the bucketName does not exist. If bucket contains Keys, all keys are deleted.
 ##' @param bucketName the bucket to be deleted
 ##' @author James "JD" Long
 ##' @export
 deleteS3Bucket <- function(bucketName){
-  emptyS3Bucket(bucketName)
-  tx <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
-  s3 <- tx$getAmazonS3Client()
-  s3$deleteBucket(bucketName)
+  if (s3$doesBucketExist(bucketName) == TRUE) {
+    emptyS3Bucket(bucketName)
+    tx <- new(com.amazonaws.services.s3.transfer.TransferManager, awsCreds)
+    s3 <- tx$getAmazonS3Client()
+    s3$deleteBucket(bucketName)
+  }
 }
 
 ##' AWS Support Function: Creates an S3 Bucket
@@ -150,11 +157,13 @@ createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
   clusterObject$s3TempDirOut <- s3TempDirOut
 
   #create the s3 bucket
+  ## TODO: error check this
   makeS3Bucket(s3TempDir)
   
   #upload the bootstrapper to S3 if needed
   if (bootStrapLatestR==TRUE) {
-    uploadS3File(system.file("bootstrap.sh", package="segue"), s3TempDir )
+    ##TODO: error checkign in the uploadS3File function
+    uploadS3File(s3TempDir, system.file("bootstrap.sh", package="segue") )
   }
   clusterObject$bootStrapLatestR <- bootStrapLatestR
   
@@ -174,12 +183,11 @@ createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
 ##' @author James "JD" Long
 ##' @export
 checkStatus <- function(jobFlowId){
-
   service <- new( com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient, awsCreds )
   request <- new( com.amazonaws.services.elasticmapreduce.model.DescribeJobFlowsRequest )
   detailsList <- new( java.util.ArrayList )
   detailsList$add(jobFlowId)
-  request$withJobFlowIds(detailsList)
+  request$setJobFlowIds(detailsList)
   descriptions <- as.list(service$describeJobFlows(request)$getJobFlows())
   descriptions[[1]]$getExecutionStatusDetail()$getState()
 }
@@ -199,8 +207,6 @@ startCluster <- function(clusterObject){
   s3TempDirOut     <- clusterObject$s3TempDirOut
   bootStrapLatestR <- clusterObject$bootStrapLatestR
   verbose          <- TRUE
-  numInstances     <- clusterObject$numInstances
-
  
   #### testing only ###
   #s3TempDir <- "abc123test"
@@ -210,7 +216,7 @@ startCluster <- function(clusterObject){
   request <- new( com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest )
   conf    <- new( com.amazonaws.services.elasticmapreduce.model.JobFlowInstancesConfig )
 
-  if bootStrapLatestR == TRUE {
+  if (bootStrapLatestR == TRUE) {
    scriptBootActionConfig <- new(com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig)
     scriptBootActionConfig$setPath(paste("s3://", s3TempDir, "/bootstrap.sh", sep=""))
   
@@ -221,7 +227,7 @@ startCluster <- function(clusterObject){
     bootStrapList <- new( java.util.ArrayList )
     bootStrapList$add(bootStrapConfig)
     request$setBootstrapActions(bootStrapList)
- }
+  }
   
   ## TODO add the following arguments:
      # placement location
@@ -242,6 +248,8 @@ startCluster <- function(clusterObject){
   request$setName(jobFlowName)
 
   result <- service$runJobFlow(request)
+
+  ## BUG: something is failing right around here when a new cluster is started
   jobFlowId <- result$getJobFlowId()
   
   while (checkStatus(jobFlowId)$ExecutionStatusDetail$State %in%
@@ -260,9 +268,9 @@ startCluster <- function(clusterObject){
 
 ##' Stops a running cluster
 ##'
-##' Stops a running cluster
+##' Stops a running cluster - known as clusterFuck() in previous versions
 ##' 
-##' @return not really sure
+##' @return not really sure - Jack Shit, I think
 ##' @author James "JD" Long
 ##' @param clusterObject a cluster object to stop
 ##' @export
@@ -277,6 +285,15 @@ stopCluster <- function(clusterObject){
   service$terminateJobFlows(request)
 
 }
+
+##testing cluster object
+clusterObject <- list()
+clusterObject$numInstances <- 2
+clusterObject$s3TempDir <- "abc123testme"
+clusterObject$s3TempDirOut <- "abc123testmeout"
+clusterObject$bootStrapLatestR <- FALSE
+clusterObject$jobFlowId <- "j-3PDDT0RVOFZU1"
+clusterObject$enableDebugging <- TRUE
 
 ##' Submits a job to a running cluster
 ##' Submits a job to a running cluster
@@ -293,18 +310,40 @@ submitJob <- function(clusterObject){
   enableDebugging <- clusterObject$enableDebugging
 
   deleteS3Bucket(s3TempDirOut)
+
+  jobFlowId <- clusterObject$jobFlowId
+
+  service <- new( com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient, awsCreds )
+
+  hadoopJarStep <- new(com.amazonaws.services.elasticmapreduce.model.HadoopJarStepConfig)
+  hadoopJarStep$setJar("/home/hadoop/hadoop-streaming.jar")
+  argList <- new( java.util.ArrayList )
+  argList$add( "-mapper" )
+  argList$add( "s3://mybucket/mapper.py" )
+  argList$add( "-reducer" )
+  argList$add( "s3://mybucket/reducer.rb" )
+  argList$add( "-input" )
+  argList$add( paste("s3n://", s3TempDir, "/stream.txt", sep="") )
+  argList$add( "-output" )
+  argList$add( paste("s3n://", s3TempDirOut, "/", sep="") )
+  argList$add( "-cacheFile" )
+  argList$add( paste("s3n://", s3TempDir, "/emrData.RData#emrData.RData", sep="") )
   
-  emrCall <- paste("~/EMR/elastic-mapreduce  --stream ",
-                     " --jobflow ", jobFlowId, 
-                     " --input s3n://", s3TempDir, "/stream.txt",
-                     " --mapper s3n://", s3TempDir, "/mapper.R ",
-                     " --reducer cat ",
-                     " --output s3n://", s3TempDirOut, "/  ", 
-                     " --cache s3n://", s3TempDir, "/emrData.RData#emrData.RData",
-                     if (enableDebugging==TRUE) {" --enable-debugging "} ,
-                   sep="")
+  if (enableDebugging==TRUE) {argList$add( "-enable-debugging" )}
+
+  hadoopJarStep$setArgs(argList)
+
+  stepName <- format(Sys.time(), "%Y-%m-%d_%H:%M:%OS5") 
   
-  emrCallReturn <- system(emrCall, intern=TRUE)
+  stepConfig <- new(com.amazonaws.services.elasticmapreduce.model.StepConfig, stepName, hadoopJarStep)
+  stepConfig$setActionOnFailure("CANCEL_AND_WAIT")
+  
+  stepList <- new( java.util.ArrayList )
+  stepList$add( stepConfig )
+  request <- new( com.amazonaws.services.elasticmapreduce.model.AddJobFlowStepsRequest, jobFlowId, stepList)
+
+  requestResult <- service$addJobFlowSteps(request)
+
   message(emrCallReturn)
   if (substr(emrCallReturn, 1, 14)!= "Added steps to"){
     message(paste("The job did not submit properly. The command line was ", emrCall, sep=""))
