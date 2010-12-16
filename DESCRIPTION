@@ -5,11 +5,11 @@ Version: 0.01
 Date: 2010-12-08
 Author: James Long
 Maintainer: JD Long <jdlong@gmail.com>
-Depends: R (>= 2.7), rJava
-Imports: rjson, caTools
+Depends: R (>= 2.7), rJava, caTools
+Imports:
 Description: A segue into parallel processing on Amazon's Web Services.
 License: MIT License
 URL: http://code.google.com/p/segue/
 LazyLoad: yes
-Collate: 'awsFunctions.R' 'createCluster.R' 'csvToList.R' 'emrlapply.R' 'getFinalStatus.R' 'listToCsv.R' 'segue-package.R' 'startCluster.R'
-    'submitJob.R' 'terminateCluster.R' 'zzz.R'
+Collate: 'awsFunctions.R' 'createCluster.R' 'csvToList.R' 'emrlapply.R' 'getFinalStatus.R' 'listToCsv.R' 'segue-package.R' 'terminateCluster.R'
+    'zzz.R'

@@ -4,5 +4,5 @@
 \usage{submitJob(clusterObject)}
 \description{Submits a job to a running cluster
 Submits a job to a running cluster}
-\value{Execution status of a job}
-\arguments{\item{clusterObject}{cluster to submit to}}
+\value{Execution status of this job}
+\arguments{\item{clusterObject}{a cluster object to submit to}}

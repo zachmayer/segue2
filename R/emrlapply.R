@@ -1,18 +1,18 @@
 
 
-#' Parallel lapply() function using Amazon's EMR service.
-#'
-#' Parallel lapply() function for applying a function to every item in a list
-#' using Amazon's EMR service.
-#' 
-#' 
-#' @param X list to which the function will be applied
-#' @param FUN function to apply
-#' @param clusterObject cluster on which to run the process
-#' @param \dots other params to pass to FUN
-#' @return Output as a list
-#' 
-#' @export
+##' Parallel lapply() function using Amazon's EMR service.
+##'
+##' Parallel lapply() function for applying a function to every item in a list
+##' using Amazon's EMR service.
+##' 
+##' 
+##' @param X list to which the function will be applied
+##' @param FUN function to apply
+##' @param clusterObject cluster on which to run the process
+##' @param \dots other params to pass to FUN
+##' @return Output as a list
+##' 
+##' @export
 emrlapply <- function(X, FUN, clusterObject, ... ) {
   #set up a local temp directory
   myTempDir <- clusterObject$localTempDir
@@ -21,6 +21,9 @@ emrlapply <- function(X, FUN, clusterObject, ... ) {
   myFun <- FUN
   funArgs <-  as.list(substitute(list(...)))[-1L]
 
+  ## TESTING!!!
+  #funArgs <- convertArgs(na.rm=TRUE)
+  
   cranPackages <- clusterObject$cranPackages 
   
   #save the objects
@@ -31,44 +34,44 @@ emrlapply <- function(X, FUN, clusterObject, ... ) {
        file = objectsFileName,
        compress="xz")
 
-  #make sure the buckets exist, and that they are empty
-  makeS3Bucket(s3TempDir)
-  makeS3Bucket(s3TempDirOut)
-  
-  emptyS3Bucket(s3TempDir)
-  emptyS3Bucket(s3TempDirOut)
+  #make sure the bucket exists, and is empty
+  try(makeS3Bucket(clusterObject$s3TempDir), silent=TRUE)
+  emptyS3Bucket(clusterObject$s3TempDir)
+
+  #the out director must NOT exist
+  try(deleteS3Bucket(clusterObject$s3TempDirOut), silent=TRUE)
   
   #upload the datafile to S3
-  uploadS3File(s3TempDir, paste(objectsFileName, "/emrData.RData" , sep=""))
+  uploadS3File(clusterObject$s3TempDir, paste(objectsFileName, sep=""))
     
   #upload the mapper to S3
   #needs to be altered for a package
-  uploadS3File(s3TempDir, system.file("mapper.R", package="emrlapply"))
+  uploadS3File(clusterObject$s3TempDir, system.file("mapper.R", package="emrlapply"))
 
   #serialize the X list to a temp file
   streamFile <- paste(myTempDir, "/stream.txt", sep="")
   listToCsv(X, streamFile)
   
   #now upload stream.txt to EMR
-  uploadS3File(s3TempDir, streamFile)
+  uploadS3File(clusterObject$s3TempDir, streamFile)
   
   finalStatus <- submitJob(clusterObject) 
   myTempDirOut <- clusterObject$localTempDirOut
-  
-  if (finalStatus %in% c("COMPLETED", "WAITING")) {
-    system(paste("mkdir ", myTempDirOut, sep="" ))
-    system(paste("rm ", myTempDirOut, "/*", sep=""))
-    
-    system(paste("s3cmd get  s3://", s3TempDirOut, 
-              "/* ", myTempDirOut, "/", sep=""))
 
+  
+  #if (finalStatus %in% c("COMPLETED", "WAITING")) {
+  #  system(paste("mkdir ", myTempDirOut, sep="" ))
+  #  system(paste("rm ", myTempDirOut, "/*", sep=""))
+
+  downloadS3File(s3TempDirOut, ".all", myTempDirOut)
+   
     #open files
-    returnedFiles <- list.files(path=myTempDirOut, pattern="part")
+  returnedFiles <- list.files(path=myTempDirOut, pattern="part")
     #yes, I read all the results into R then write them out to a text file
     #There was a reason for doing this, but I don't remember it
     #this could all be done in one step
-    combinedOutputFile <- file(paste(myTempDirOut, "/combinedOutput.csv", sep=""), "w")
-    unparsedOutput <- NULL
+  combinedOutputFile <- file(paste(myTempDirOut, "/combinedOutput.csv", sep=""), "w")
+  unparsedOutput <- NULL
     for (file in returnedFiles){
         lines <- readLines(paste(myTempDirOut, "/", file, sep="")) 
         for (line in lines) {
@@ -91,5 +94,6 @@ emrlapply <- function(X, FUN, clusterObject, ... ) {
     }
     return(as.list(output))
   }
+}
 }
 
