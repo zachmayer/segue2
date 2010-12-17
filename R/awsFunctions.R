@@ -175,7 +175,10 @@ createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
   localTempDir <- paste(tempdir(), paste(sample(c(0:9, letters), 10, rep=T), collapse=""), sep="")
   clusterObject$localTempDir <- localTempDir
   clusterObject$localTempDirOut <- paste(localTempDir, "/out", sep="")
-  
+
+  system(paste("mkdir", localTempDir))
+  system(paste("mkdir", clusterObject$localTempDirOut))
+
   s3TempDir <- tolower(unlist(strsplit(localTempDir, "/"))[length(unlist(strsplit(localTempDir, "/")))])
   deleteS3Bucket(s3TempDir)
   clusterObject$s3TempDir <- s3TempDir
@@ -381,13 +384,13 @@ submitJob <- function(clusterObject){
   hadoopJarStep$setJar("/home/hadoop/contrib/streaming/hadoop-streaming.jar")
   argList <- new( java.util.ArrayList )
   argList$add( "-cacheFile" )
-  argList$add( paste("s3://", s3TempDir, "/emrData.RData#emrData.RData", sep=""))
+  argList$add( paste("s3n://", s3TempDir, "/emrData.RData#emrData.RData", sep=""))
   argList$add( "-input" )
-  argList$add( paste("s3://", s3TempDir, "/stream.txt", sep="") )
+  argList$add( paste("s3n://", s3TempDir, "/stream.txt", sep="") )
   argList$add( "-output" )
-  argList$add( paste("s3://", s3TempDirOut, "/", sep="") )
+  argList$add( paste("s3n://", s3TempDirOut, "/", sep="") )
   argList$add( "-mapper" )
-  argList$add( paste("s3://", s3TempDir, "/mapper.R", sep="" ))
+  argList$add( paste("s3n://", s3TempDir, "/mapper.R", sep="" ))
   argList$add( "-reducer" )
   argList$add( "cat" )
              

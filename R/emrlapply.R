@@ -63,7 +63,7 @@ emrlapply <- function(X, FUN, clusterObject, ... ) {
   #  system(paste("mkdir ", myTempDirOut, sep="" ))
   #  system(paste("rm ", myTempDirOut, "/*", sep=""))
 
-  downloadS3File(s3TempDirOut, ".all", myTempDirOut)
+  downloadS3File(clusterObject$s3TempDirOut, ".all", myTempDirOut)
    
     #open files
   returnedFiles <- list.files(path=myTempDirOut, pattern="part")
@@ -93,7 +93,6 @@ emrlapply <- function(X, FUN, clusterObject, ... ) {
                                                                         "raw")))
     }
     return(as.list(output))
-  }
 }
-}
+
 
