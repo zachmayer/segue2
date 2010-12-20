@@ -1,5 +1,10 @@
-# Lower logging level: LogManager.getLogManager().getLogger("com.amazonaws.request").setLevel(Level.OFF);
-# ref: https://forums.aws.amazon.com/thread.jspa?messageID=186655&#186655
+
+## A little simplification would be the first step toward rational living, I think.
+## Eleanor Roosevelt 
+
+
+## Lower logging level: LogManager.getLogManager().getLogger("com.amazonaws.request").setLevel(Level.OFF);
+## ref: https://forums.aws.amazon.com/thread.jspa?messageID=186655&#186655
 
 ##' ##' AWS Support Function: set up credentials
 ##'
@@ -82,7 +87,7 @@ deleteS3Bucket <- function(bucketName){
 
 ##' AWS Support Function: Creates an S3 Bucket
 ##'
-##' Returns a warning if bucketName already exists.
+##' Creates an S3 bucket. If the bucket already exists, no warning is returned.
 ##' @param bucketName string of the name of the bucket to be created
 ##' @author James "JD" Long
 ##' @export
@@ -113,11 +118,11 @@ uploadS3File <- function(bucketName, localFile){
     s3$putObject(request)
 }
 
-##' AWS Support Function: Uploads a local file to an S3 Bucket
+##' AWS Support Function: Downloads a key from an S3 Bucket into a local file.
 ##'
 ##' Pulls a key (file) from a bucket into a localFile. If the keyName = ".all" then
 ##' all files from the bucket are pulled and localFile should be a
-##' directory name. Ignores "sub directories" in buckets
+##' directory name. Ignores "sub directories" in buckets. 
 ##' @param bucketName destination bucket
 ##' @param keyName key to download. ".all" to pull all keys
 ##' @param localFile local file name or path if ".all" is called for keyName
@@ -154,7 +159,8 @@ downloadS3File <- function(bucketName, keyName, localFile){
     }
   }
   
-##' AWS Support Function: Creates a Hadoop cluster on Elastic Map Reduce.
+##' AWS Support Function: Creates the configuration object, uploads needed files, and starts
+##' a Segue Hadoop cluster on Elastic Map Reduce. 
 ##'
 ##' The the needed files are uploaded to S3 and the EMR nodes are started.
 ##' @param numInstances number of nodes (EC2 instances)
@@ -200,9 +206,7 @@ createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
   
   # start cluster
   jobFlowId <- startCluster(clusterObject)
-  
   clusterObject$jobFlowId <- jobFlowId
-  
   return(clusterObject)
 }
 
@@ -246,11 +250,10 @@ checkLastStepStatus <- function(jobFlowId){
 }
 
 
-
-
 ##' Starts a cluster on Amazon's EMR service
+##' 
 ##' After a cluster has been defined with createCluster() this function actually
-##' starts the machines running.
+##' starts the machines running. Currently exported, but soon will be internal only.
 ##' 
 ##' @param clusterObject cluster object to start
 ##' @return a Job Flow ID
@@ -284,9 +287,11 @@ startCluster <- function(clusterObject){
      # placement location
      # master instance type
      # slave instance type
-     # key name
-  
-  #conf$setEc2KeyName(myKeyName);
+     # key name - for remote login
+
+  #debugging... set to my personal key
+  conf$setEc2KeyName("ec2ApiTools")
+
   conf$setInstanceCount(new(Integer, as.character(numInstances)))
   conf$setKeepJobFlowAliveWhenNoSteps(new(Boolean, TRUE))
   conf$setMasterInstanceType("m1.small")
@@ -316,20 +321,17 @@ startCluster <- function(clusterObject){
   if (currentStatus == "WAITING") {
     message("Your Amazon EMR Hadoop Cluster is ready for action. \nRemember to terminate your cluster with stopCluster().\nAmazon is billing you!")
   }
+  return(jobFlowId)
   
-  if (currentStatus %in% c("COMPLETED", "WAITING")  == TRUE) {
-    return(jobFlowId)
-  }
   ## TODO: need to catch situations where the cluster failed
-
 }
 
 
 ##' Stops a running cluster
 ##'
-##' Stops a running cluster - known as clusterFuck() and terminateCluster() in previous versions
+##' Stops a running cluster and deletes temporary directories from EC2
 ##' 
-##' @return not really sure - Jack Shit, I think
+##' @return nothing
 ##' @author James "JD" Long
 ##' @param clusterObject a cluster object to stop
 ##' @export
@@ -342,22 +344,26 @@ stopCluster <- function(clusterObject){
   detailsList$add(jobFlowId)
   request$withJobFlowIds(detailsList)
   service$terminateJobFlows(request)
+  deleteS3Bucket(clusterObject$s3TempDir)
+  deleteS3Bucket(clusterObject$s3TempDirOut)
 }
 
 ##' Submits a job to a running cluster
-##' Submits a job to a running cluster
+##' 
+##' After a cluster has been started this function submits jobs to that cluster. If a job is submitted with enableDebugging=TRUE, all jobs submitted to that cluster will also have debugging enabled. To turn debugging off, the cluster must be stopped and restarted.
 ##' 
 ##' 
 ##' @param clusterObject a cluster object to submit to
+##' @param stopClusterOnComplete set to true if you want the cluster to be shut down after job completes
 ##' @return Execution status of this job
 ##' 
 ##' @export
-submitJob <- function(clusterObject){
+submitJob <- function(clusterObject, stopClusterOnComplete=FALSE){
   jobFlowId       <- clusterObject$jobFlowId
   s3TempDir       <- clusterObject$s3TempDir
   s3TempDirOut    <- clusterObject$s3TempDirOut
   enableDebugging <- clusterObject$enableDebugging
-
+ 
   try(deleteS3Bucket(s3TempDirOut), silent=TRUE)
 
   jobFlowId <- clusterObject$jobFlowId
@@ -393,8 +399,10 @@ submitJob <- function(clusterObject){
   argList$add( paste("s3n://", s3TempDir, "/mapper.R", sep="" ))
   argList$add( "-reducer" )
   argList$add( "cat" )
-             
-  #if (enableDebugging==TRUE) {argList$add( "-enable-debugging" )}
+
+  argList$add( "-cacheFile" )
+  argList$add( "s3n://rdata/plyr_0.1.9.tar.gz" )
+
   hadoopJarStep$setArgs(argList)
 
   stepName <- format(Sys.time(), "%Y-%m-%d_%H:%M:%OS5") 
@@ -408,7 +416,7 @@ submitJob <- function(clusterObject){
 
   try(deleteS3Bucket(clusterObject$s3TempDirOut), silent=TRUE)
   
-  #start step
+  #submit to EMR happens here
   service$addJobFlowSteps(request)
 
   Sys.sleep(15)
@@ -417,14 +425,16 @@ submitJob <- function(clusterObject){
 
   Sys.sleep(15)
 
-  if (enableDebugging==TRUE){Sys.sleep(30)} #debugging has to be set up on each job so it takes a bit
-
   currentStatus <- checkStatus(jobFlowId)
   while (currentStatus  %in% c("COMPLETED", "FAILED", "TERMINATED", "WAITING", "CANCELLED")  == FALSE) {
     Sys.sleep(30)
     currentStatus <- checkStatus(jobFlowId)
     message(paste(currentStatus, " - ", Sys.time(), sep="" ))
   }
+  if (stopClusterOnComplete==TRUE) {
+    stopCluster(clusterObject)
+  }
   return(currentStatus)
+  
 }
 
