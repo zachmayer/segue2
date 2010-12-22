@@ -1,7 +1,7 @@
 \name{emrlapply}
 \alias{emrlapply}
 \title{Parallel lapply() function using Amazon's EMR service.}
-\usage{emrlapply(X, FUN, clusterObject, ...)}
+\usage{emrlapply(clusterObject, X, FUN, ...)}
 \description{Parallel lapply() function using Amazon's EMR service.}
 \details{Parallel lapply() function for applying a function to every item in a list
 using Amazon's EMR service.}

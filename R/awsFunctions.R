@@ -51,6 +51,7 @@ emptyS3Bucket <- function(bucketName){
 
   # TODO: need a check to make sure the current user owns the bucket
   #       before trying to delete everything in it
+  #       there's some risk this might loop forever if they don't own the bucket
   if (s3$doesBucketExist(bucketName)) {  
     lst <- s3$listObjects(bucketName)
     objSums <- lst$getObjectSummaries()
@@ -66,7 +67,6 @@ emptyS3Bucket <- function(bucketName){
     }
   }
 }
-
 
 ##' AWS Support Function: Delete an S3 Bucket
 ##'
@@ -159,26 +159,61 @@ downloadS3File <- function(bucketName, keyName, localFile){
     }
   }
   
-##' AWS Support Function: Creates the configuration object, uploads needed files, and starts
+##' Creates the configuration object, uploads needed files, and starts
 ##' a Segue Hadoop cluster on Elastic Map Reduce. 
 ##'
 ##' The the needed files are uploaded to S3 and the EMR nodes are started.
 ##' @param numInstances number of nodes (EC2 instances)
-##' @param bootStrapLatestR T/F whether or not to load the latest R from CRAN
 ##' @param cranPackages vector of string names of CRAN packages to load on each cluster node
+##' @param filesOnNodes vector of string names of full path of files to be loaded on each node.
+##' Files will be loaded into the local
+##' path (i.e. ./file) on each node. 
 ##' @param enableDebugging T/F whether EMR debugging should be enabled
+##' @param instancesPerNode Number of R instances per node. Default of NULL uses AWS defaults.
+##' @param masterInstanceType EC2 instance type for the master node
+##' @param slaveInstanceType EC2 instance type for the slave nodes
+##' @param location EC2 location name for the cluster
+##' @param ec2KeyName EC2 Key used for logging into the main node. Use the user name 'hadoop'
+##' @return an emrlapply() cluster object with appropriate fields
+##'   populated. Keep in mind that this creates the cluster and starts the cluster running.
 ##' @author James "JD" Long
+##' @examples
+##' \dontrun{
+##' myCluster   <- createCluster(numInstances=2,
+##' bootStrapLatestR=TRUE, cranPackages=c("Hmisc", "plyr"))
+##' }
 ##' @export
-createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
-                          cranPackages=NULL, enableDebugging=FALSE){
-  #TODO: add support for different instance sizes
+createCluster <- function(numInstances=2,
+                          cranPackages=NULL,
+                          filesOnNodes=NULL, 
+                          enableDebugging=FALSE,
+                          instancesPerNode=NULL,
+                          masterInstanceType="m1.small",
+                          slaveInstanceType="m1.small",
+                          location = "us-east-1a",
+                          ec2KeyName=NULL                      
+                          ){
+  ## this used to be an argument but not bootstrapping
+  ## caused too many problems
+  bootStrapLatestR=TRUE 
 
-  clusterObject <- list(numInstances=numInstances,
-                        cranPackages=cranPackages,
-                        enableDebugging=enableDebugging,
-                        bootStrapLatestR=bootStrapLatestR)
+  clusterObject <- list(numInstances = numInstances,
+                        cranPackages = cranPackages,
+                        enableDebugging = enableDebugging,
+                        bootStrapLatestR = bootStrapLatestR,
+                        filesOnNodes = filesOnNodes, 
+                        enableDebugging = enableDebugging,
+                        instancesPerNode = instancesPerNode,
+                        masterInstanceType = masterInstanceType,
+                        slaveInstanceType = slaveInstanceType,
+                        location = location,
+                        ec2KeyName = ec2KeyName     
+                        )
   
-  localTempDir <- paste(tempdir(), paste(sample(c(0:9, letters), 10, rep=T), collapse=""), sep="")
+  localTempDir <- paste(tempdir(),
+                        paste(sample(c(0:9, letters), 10, rep=T), collapse=""),
+                        "-segue",
+                        sep="")
   clusterObject$localTempDir <- localTempDir
   clusterObject$localTempDirOut <- paste(localTempDir, "/out", sep="")
 
@@ -199,8 +234,8 @@ createCluster <- function(numInstances=2, bootStrapLatestR=TRUE,
   
   #upload the bootstrapper to S3 if needed
   if (bootStrapLatestR==TRUE) {
-    ##TODO: error checkign in the uploadS3File function
-    uploadS3File(s3TempDir, system.file("bootstrap.sh", package="segue") )
+    ##TODO: error checking in the uploadS3File function
+    uploadS3File(s3TempDir, system.file("bootstrapLatestR.sh", package="segue") )
   }
   clusterObject$bootStrapLatestR <- bootStrapLatestR
   
@@ -270,34 +305,93 @@ startCluster <- function(clusterObject){
   request <- new( com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest )
   conf    <- new( com.amazonaws.services.elasticmapreduce.model.JobFlowInstancesConfig )
 
+  #creates the bootstrap list
+  bootStrapList <- new( java.util.ArrayList )
+  
   if (bootStrapLatestR == TRUE) {
    scriptBootActionConfig <- new(com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig)
-   scriptBootActionConfig$setPath(paste("s3://", s3TempDir, "/bootstrap.sh", sep=""))
+   scriptBootActionConfig$setPath(paste("s3://", s3TempDir, "/bootstrapLatestR.sh", sep=""))
   
    bootStrapConfig <- new( com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig)
      with( bootStrapConfig, setScriptBootstrapAction(scriptBootActionConfig))
      with( bootStrapConfig, setName("RBootStrap"))
-  
-   bootStrapList <- new( java.util.ArrayList )
+ 
    bootStrapList$add(bootStrapConfig)
-   request$setBootstrapActions(bootStrapList)
   }
-  
-  ## TODO add the following arguments:
-     # placement location
-     # master instance type
-     # slave instance type
-     # key name - for remote login
 
+  if (is.null(clusterObject$filesOnNodes) == FALSE) { #test this shit - putting files on each node
+
+    ## build a batch file that includes each element of filesOnNodes
+    ## then add the batch file as a boot strap action
+
+    ## open the output file (bootStrapFiles.sh) in clusterObject$tempDir
+    ## open an output file connection
+    outfile <- file( paste( clusterObject$localTempDir, "/bootStrapFiles.sh", sep="" ), "w" )  
+    cat("#!/bin/bash", "", file = outfile, sep = "\n")
+   
+     ## for each element in filesOnNodes add a hadoop -fs line
+    for ( file in clusterObject$filesOnNodes ){
+      system("mkdir /tmp/segue-upload/") 
+      remotePath <- paste( "/tmp/segue-upload/", tail(strsplit(file,"/")[[1]], 1), sep="" )
+      fileName <- tail(strsplit(file,"/")[[1]], 1)
+      s3Path <- paste( "s3://", clusterObject$s3TempDir, "/", fileName, sep="" )
+      cat( paste( "hadoop fs -get ", s3Path, remotePath)
+          , file = outfile, sep = "\n" )
+      cat( "\n", file = outfile )
+      
+      # copy each file to S3
+      uploadS3File( clusterObject$s3TempDir, file )
+    }
+    close( outfile )
+     # copy bootStrapFiles.sh to clusterObject$s3TempDir
+    uploadS3File( clusterObject$s3TempDir, paste( clusterObject$localTempDir, "/bootStrapFiles.sh", sep="" ) )
+
+     # add a bootstrap action that runs bootStrapFiles.sh
+   scriptBootActionConfig <- new(com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig)
+   scriptBootActionConfig$setPath(paste("s3://", s3TempDir, "/bootStrapFiles.sh", sep=""))
+  
+   bootStrapConfig <- new( com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig)
+     with( bootStrapConfig, setScriptBootstrapAction(scriptBootActionConfig))
+     with( bootStrapConfig, setName("RBootStrapFiles"))
+ 
+   bootStrapList$add(bootStrapConfig)
+  }
+
+  if (is.null(clusterObject$instancesPerNode) == FALSE) { #test this shit
+   scriptBootActionConfig <- new(com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig)
+   scriptBootActionConfig$setPath("s3://elasticmapreduce/bootstrap-actions/configure-hadoop")
+
+   argList <- new( java.util.ArrayList )
+   argList$add( "-s" )
+   argList$add( paste( "mapred.tasktracker.map.tasks.maximum=", clusterObject$instancesPerNode, sep="") )
+   argList$add( "-s" )
+   argList$add( paste( "mapred.tasktracker.reducer.tasks.maximum=", clusterObject$instancesPerNode, sep="") )
+ 
+   scriptBootActionConfig$setArgs( argList )
+                                  
+   bootStrapConfig <- new( com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig)
+     with( bootStrapConfig, setScriptBootstrapAction(scriptBootActionConfig))
+     with( bootStrapConfig, setName("SetInstancePerNode"))
+ 
+   bootStrapList$add(bootStrapConfig)    
+  }
+          
+   ## this adds the bootstrap to the request
+  
+   request$setBootstrapActions(bootStrapList)
+  
+  if ( is.null( clusterObject$ec2KeyName == TRUE ) ) {
+      conf$setEc2KeyName(clusterObject$ec2KeyName)
+  }
   #debugging... set to my personal key
-  conf$setEc2KeyName("ec2ApiTools")
+  #conf$setEc2KeyName("ec2ApiTools")
 
   conf$setInstanceCount(new(Integer, as.character(numInstances)))
   conf$setKeepJobFlowAliveWhenNoSteps(new(Boolean, TRUE))
-  conf$setMasterInstanceType("m1.small")
+  conf$setMasterInstanceType( clusterObject$masterInstanceType )
 
-  conf$setPlacement(new(com.amazonaws.services.elasticmapreduce.model.PlacementType, "us-east-1a"))
-  conf$setSlaveInstanceType("m1.small")
+  conf$setPlacement(new(com.amazonaws.services.elasticmapreduce.model.PlacementType, clusterObject$location))
+  conf$setSlaveInstanceType( clusterObject$slaveInstanceType )
   request$setInstances(conf)
   request$setLogUri(paste("s3://", s3TempDir, "/logs ", sep=""))
   jobFlowName <- paste("RJob-", date(), sep="")
@@ -326,7 +420,6 @@ startCluster <- function(clusterObject){
   ## TODO: need to catch situations where the cluster failed
 }
 
-
 ##' Stops a running cluster
 ##'
 ##' Stops a running cluster and deletes temporary directories from EC2
@@ -350,7 +443,10 @@ stopCluster <- function(clusterObject){
 
 ##' Submits a job to a running cluster
 ##' 
-##' After a cluster has been started this function submits jobs to that cluster. If a job is submitted with enableDebugging=TRUE, all jobs submitted to that cluster will also have debugging enabled. To turn debugging off, the cluster must be stopped and restarted.
+##' After a cluster has been started this function submits jobs to that cluster.
+##' If a job is submitted with enableDebugging=TRUE, all jobs submitted to that
+##' cluster will also have debugging enabled. To turn debugging off, the cluster
+##' must be stopped and restarted.
 ##' 
 ##' 
 ##' @param clusterObject a cluster object to submit to
@@ -399,9 +495,6 @@ submitJob <- function(clusterObject, stopClusterOnComplete=FALSE){
   argList$add( paste("s3n://", s3TempDir, "/mapper.R", sep="" ))
   argList$add( "-reducer" )
   argList$add( "cat" )
-
-  argList$add( "-cacheFile" )
-  argList$add( "s3n://rdata/plyr_0.1.9.tar.gz" )
 
   hadoopJarStep$setArgs(argList)
 

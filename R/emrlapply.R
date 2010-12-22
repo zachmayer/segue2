@@ -1,5 +1,3 @@
-
-
 ##' Parallel lapply() function using Amazon's EMR service.
 ##'
 ##' Parallel lapply() function for applying a function to every item in a list
@@ -13,7 +11,7 @@
 ##' @return Output as a list
 ##' 
 ##' @export
-emrlapply <- function(X, FUN, clusterObject, ... ) {
+emrlapply <- function(clusterObject, X, FUN,  ... ) {
   #set up a local temp directory
   myTempDir <- clusterObject$localTempDir
 
@@ -88,9 +86,12 @@ emrlapply <- function(X, FUN, clusterObject, ... ) {
     output <- NULL
     
     for (i in 1:length(lines)){
-      output[[as.numeric(lines[[i]][[1]])]] <- (unserialize(base64decode(substr(lines[[i]][[2]],
-                                                                               1, nchar(lines[[i]][[2]])-1),
-                                                                        "raw")))
+      output[[as.numeric(lines[[i]][[1]])]] <- (unserialize(
+                                                 base64decode(
+                                                   substr(
+                                                     lines[[i]][[2]],
+                                                          1,
+                                                          nchar(lines[[i]][[2]])-1), "raw")))
     }
     return(as.list(output))
 }

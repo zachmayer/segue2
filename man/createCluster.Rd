@@ -1,33 +1,25 @@
 \name{createCluster}
 \alias{createCluster}
-\title{Create a cluster by starting an EMR job...}
-\usage{createCluster(numInstances=2, bootStrapLatestR=TRUE, cranPackages, enableDebugging=FALSE)}
-\description{Create a cluster by starting an EMR job
-Creates all the local infrastructure for a cluster. This creates temp
-directories locally, defins the elements of the cluster object.}
-\details{Also creates the buckets on S3 for the cluster and uploads the bootstrap
-code if needed. This function does everything except actually spin up the
-EMR cluster.}
+\title{Creates the configuration object, uploads needed files, and starts...}
+\usage{createCluster(numInstances=2, cranPackages, filesOnNodes, enableDebugging=FALSE, instancesPerNode, masterInstanceType="m1.small",
+    slaveInstanceType="m1.small", location="us-east-1a", ec2KeyName)}
+\description{Creates the configuration object, uploads needed files, and starts
+a Segue Hadoop cluster on Elastic Map Reduce.}
+\details{The the needed files are uploaded to S3 and the EMR nodes are started.}
 \value{an emrlapply() cluster object with appropriate fields
-populated. Keep in mind that this creates the cluster but does not start
-it.}
+populated. Keep in mind that this creates the cluster and starts the cluster running.}
 \author{James "JD" Long}
-\seealso{startCluster(), terminateCluster()}
-\arguments{\item{numInstances}{Number of desired nodes. This is limited by Amazon to 20
-by default.}
-\item{bootStrapLatestR}{Boolean (T or F) on whether the bootstrap script
-should run that installs the latest version of R from CRAN on each node.
-This slows down the starting of the nodes considerably. However, the
-default R on EMR was the one passed to the Children of Isreal by Moses.}
-\item{cranPackages}{Text vector of the names of any CRAN packages you desire
-loaded.  Yes I know you have the most beautiful little package you wrote
-yourself which you want to install. This code does not support that...
-yet.}
-\item{enableDebugging}{Thows Amazon EMR the debugging bit so you can log
-into the Amazon EMR dashboard and see debugging information. This slows
-things down. And be patient. Sometimes it takes 10 miutes for the debug
-data to populate the dashboard. Don't gripe to me about debugging speed on
-AMZN.}}
+\arguments{\item{numInstances}{number of nodes (EC2 instances)}
+\item{cranPackages}{vector of string names of CRAN packages to load on each cluster node}
+\item{filesOnNodes}{vector of string names of full path of files to be loaded on each node.
+Files will be loaded into the local
+path (i.e. ./file) on each node.}
+\item{enableDebugging}{T/F whether EMR debugging should be enabled}
+\item{instancesPerNode}{Number of R instances per node. Default of NULL uses AWS defaults.}
+\item{masterInstanceType}{EC2 instance type for the master node}
+\item{slaveInstanceType}{EC2 instance type for the slave nodes}
+\item{location}{EC2 location name for the cluster}
+\item{ec2KeyName}{EC2 Key used for logging into the main node. Use the user name 'hadoop'}}
 \examples{\dontrun{
 myCluster   <- createCluster(numInstances=2,
 bootStrapLatestR=TRUE, cranPackages=c("Hmisc", "plyr"))
