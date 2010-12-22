@@ -4,7 +4,8 @@ trimWhiteSpace <- function(line) gsub("(^ +)|( +$)", "", line)
 
 ## files from filesOnNodes are uploaded to a tmp directory
 ## this copies the files to the current working directory
-file.copy("/tmp/segue-upload/", getwd(), overwrite = TRUE)
+fileList <- list.files("/tmp/segue-upload/", full.names=TRUE)
+file.copy(fileList, getwd(), overwrite = TRUE)
 
 con <- file("stdin", open = "r")
 #con <- file("./stream.txt", open = "r")

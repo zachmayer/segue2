@@ -328,10 +328,9 @@ startCluster <- function(clusterObject){
     ## open an output file connection
     outfile <- file( paste( clusterObject$localTempDir, "/bootStrapFiles.sh", sep="" ), "w" )  
     cat("#!/bin/bash", "", file = outfile, sep = "\n")
-   
+    cat("mkdir /tmp/segue-upload/", "", file = outfile, sep = "\n")
      ## for each element in filesOnNodes add a hadoop -fs line
     for ( file in clusterObject$filesOnNodes ){
-      system("mkdir /tmp/segue-upload/") 
       remotePath <- paste( "/tmp/segue-upload/", tail(strsplit(file,"/")[[1]], 1), sep="" )
       fileName <- tail(strsplit(file,"/")[[1]], 1)
       s3Path <- paste( "s3://", clusterObject$s3TempDir, "/", fileName, sep="" )
