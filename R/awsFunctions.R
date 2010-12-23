@@ -70,7 +70,8 @@ emptyS3Bucket <- function(bucketName){
 
 ##' AWS Support Function: Delete an S3 Bucket
 ##'
-##' Does nothing if the bucketName does not exist. If bucket contains Keys, all keys are deleted.
+##' Does nothing if the bucketName does not exist. If bucket contains Keys,
+##' all keys are deleted.
 ##' @param bucketName the bucket to be deleted
 ##' @author James "JD" Long
 ##' @export
@@ -168,6 +169,10 @@ downloadS3File <- function(bucketName, keyName, localFile){
 ##' @param filesOnNodes vector of string names of full path of files to be loaded on each node.
 ##' Files will be loaded into the local
 ##' path (i.e. ./file) on each node. 
+##' @param rObjectsOnNodes a named list of R objects which will be passed to the R
+##' session on the worker nodes. Be sure the list has names. The list will be attached
+##' on the remote nodes using attach(rObjectsOnNodes). If you list does not have names,
+##' this will fail.
 ##' @param enableDebugging T/F whether EMR debugging should be enabled
 ##' @param instancesPerNode Number of R instances per node. Default of NULL uses AWS defaults.
 ##' @param masterInstanceType EC2 instance type for the master node
@@ -185,7 +190,8 @@ downloadS3File <- function(bucketName, keyName, localFile){
 ##' @export
 createCluster <- function(numInstances=2,
                           cranPackages=NULL,
-                          filesOnNodes=NULL, 
+                          filesOnNodes=NULL,
+                          rObjectsOnNodes=NULL, 
                           enableDebugging=FALSE,
                           instancesPerNode=NULL,
                           masterInstanceType="m1.small",
@@ -201,7 +207,8 @@ createCluster <- function(numInstances=2,
                         cranPackages = cranPackages,
                         enableDebugging = enableDebugging,
                         bootStrapLatestR = bootStrapLatestR,
-                        filesOnNodes = filesOnNodes, 
+                        filesOnNodes = filesOnNodes,
+                        rObjectsOnNodes = rObjectsOnNodes, 
                         enableDebugging = enableDebugging,
                         instancesPerNode = instancesPerNode,
                         masterInstanceType = masterInstanceType,
@@ -436,8 +443,8 @@ stopCluster <- function(clusterObject){
   detailsList$add(jobFlowId)
   request$withJobFlowIds(detailsList)
   service$terminateJobFlows(request)
-  deleteS3Bucket(clusterObject$s3TempDir)
-  deleteS3Bucket(clusterObject$s3TempDirOut)
+  try( deleteS3Bucket(clusterObject$s3TempDir), silent=TRUE )
+  try( deleteS3Bucket(clusterObject$s3TempDirOut), silent=TRUE )
 }
 
 ##' Submits a job to a running cluster

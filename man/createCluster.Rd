@@ -1,8 +1,8 @@
 \name{createCluster}
 \alias{createCluster}
 \title{Creates the configuration object, uploads needed files, and starts...}
-\usage{createCluster(numInstances=2, cranPackages, filesOnNodes, enableDebugging=FALSE, instancesPerNode, masterInstanceType="m1.small",
-    slaveInstanceType="m1.small", location="us-east-1a", ec2KeyName)}
+\usage{createCluster(numInstances=2, cranPackages, filesOnNodes, rObjectsOnNodes, enableDebugging=FALSE, instancesPerNode,
+    masterInstanceType="m1.small", slaveInstanceType="m1.small", location="us-east-1a", ec2KeyName)}
 \description{Creates the configuration object, uploads needed files, and starts
 a Segue Hadoop cluster on Elastic Map Reduce.}
 \details{The the needed files are uploaded to S3 and the EMR nodes are started.}
@@ -14,6 +14,10 @@ populated. Keep in mind that this creates the cluster and starts the cluster run
 \item{filesOnNodes}{vector of string names of full path of files to be loaded on each node.
 Files will be loaded into the local
 path (i.e. ./file) on each node.}
+\item{rObjectsOnNodes}{a named list of R objects which will be passed to the R
+session on the worker nodes. Be sure the list has names. The list will be attached
+on the remote nodes using attach(rObjectsOnNodes). If you list does not have names,
+this will fail.}
 \item{enableDebugging}{T/F whether EMR debugging should be enabled}
 \item{instancesPerNode}{Number of R instances per node. Default of NULL uses AWS defaults.}
 \item{masterInstanceType}{EC2 instance type for the master node}

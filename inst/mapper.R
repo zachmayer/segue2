@@ -4,8 +4,8 @@ trimWhiteSpace <- function(line) gsub("(^ +)|( +$)", "", line)
 
 ## files from filesOnNodes are uploaded to a tmp directory
 ## this copies the files to the current working directory
-fileList <- list.files("/tmp/segue-upload/", full.names=TRUE)
-file.copy(fileList, getwd(), overwrite = TRUE)
+try( fileList <- list.files("/tmp/segue-upload/", full.names=TRUE ), silent=TRUE )
+try( file.copy(fileList, getwd(), overwrite = TRUE), silent=TRUE)
 
 con <- file("stdin", open = "r")
 #con <- file("./stream.txt", open = "r")
@@ -20,6 +20,11 @@ load("./emrData.RData") #contains:
                            # myPackages - list of packages
                            # myFun - Function to apply
                            # funArgs - the arguments passed
+                           # rObjectsOnNodes - a list of R objects the users wants
+                           #                   on each node
+
+attach(rObjectsOnNodes)
+
 install.packages("bitops", lib=libPath)
 install.packages("caTools", lib=libPath)
 library(bitops,  lib=libPath)
@@ -36,7 +41,8 @@ while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0) {
   value <- unserialize(base64decode(strsplit(line, split=",")[[1]][[2]], "raw"))
   value <- list(value)
   value <- c(value, funArgs)
-  result <- do.call(myFun, value)
+  result <- do.call(myFun, value) # can you believe this one short line does
+                                  # all the work?!? 
   
   #serialize and encode the result
   sresult <- paste("<result>,", key, ",", base64encode(serialize(result, NULL, ascii=T)), "\n", sep="")

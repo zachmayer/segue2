@@ -23,12 +23,14 @@ emrlapply <- function(clusterObject, X, FUN,  ... ) {
   #funArgs <- convertArgs(na.rm=TRUE)
   
   cranPackages <- clusterObject$cranPackages 
+  rObjectsOnNodes <- clusterObject$rObjectsOnNodes
   
   #save the objects
   objectsFileName <-paste(myTempDir ,"/emrData.RData", sep="") 
   save(cranPackages,
        myFun,
-       funArgs,  
+       funArgs,
+       rObjectsOnNodes,
        file = objectsFileName,
        compress="xz")
 
