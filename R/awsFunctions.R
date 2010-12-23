@@ -443,8 +443,21 @@ stopCluster <- function(clusterObject){
   detailsList$add(jobFlowId)
   request$withJobFlowIds(detailsList)
   service$terminateJobFlows(request)
+
+  ## I have no idea why AWS needs sleep before
+  ## I can delete the temp dirs, but these fail
+  ## if I don't have the sleep
+  Sys.sleep(15)
   try( deleteS3Bucket(clusterObject$s3TempDir), silent=TRUE )
   try( deleteS3Bucket(clusterObject$s3TempDirOut), silent=TRUE )
+
+  ## something weird is going on... I have to do this twice or it
+  ## does not fully delete the s3TempDir's subdirectory
+  ## will need to give this some attention later
+  Sys.sleep(15)
+  try( deleteS3Bucket(clusterObject$s3TempDir), silent=TRUE )
+  try( deleteS3Bucket(clusterObject$s3TempDirOut), silent=TRUE )
+  
 }
 
 ##' Submits a job to a running cluster
@@ -456,7 +469,8 @@ stopCluster <- function(clusterObject){
 ##' 
 ##' 
 ##' @param clusterObject a cluster object to submit to
-##' @param stopClusterOnComplete set to true if you want the cluster to be shut down after job completes
+##' @param stopClusterOnComplete set to true if you want the cluster to be shut down
+##' after job completes
 ##' @return Execution status of this job
 ##' 
 ##' @export

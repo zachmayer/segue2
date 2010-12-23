@@ -35,7 +35,7 @@ emrlapply <- function(clusterObject, X, FUN,  ... ) {
        compress="xz")
 
   #make sure the bucket exists, and is empty
-  try(makeS3Bucket(clusterObject$s3TempDir), silent=TRUE)
+  #try(makeS3Bucket(clusterObject$s3TempDir)
   emptyS3Bucket(clusterObject$s3TempDir)
 
   #the out director must NOT exist

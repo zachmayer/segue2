@@ -8,19 +8,23 @@ try( fileList <- list.files("/tmp/segue-upload/", full.names=TRUE ), silent=TRUE
 try( file.copy(fileList, getwd(), overwrite = TRUE), silent=TRUE)
 
 con <- file("stdin", open = "r")
-#con <- file("./stream.txt", open = "r")
 
+## the libPath is set to include the process ID so that
+## multiple instances of R on the same node don't have a
+## library locking conflict
 pid <- as.character(Sys.getpid())
 libPath <- paste("/tmp/R", pid, "/", sep='')
-## if you don't want to use the Iowa State mirror for CRAN, you should change this
-options(repos=c(CRAN="http://streaming.stat.iastate.edu/CRAN/"))
+
+## if you don't want to use the main CRAN site, you should
+## change this to a mirror
+options(repos=c(CRAN="http://cran.r-project.org/"))
 dir.create(libPath)
 
 load("./emrData.RData") #contains:
                            # myPackages - list of packages
                            # myFun - Function to apply
                            # funArgs - the arguments passed
-                           # rObjectsOnNodes - a list of R objects the users wants
+                           # rObjectsOnNodes - a NAMED list of R objects the users wants
                            #                   on each node
 
 attach(rObjectsOnNodes)
