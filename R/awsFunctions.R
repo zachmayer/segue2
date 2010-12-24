@@ -179,6 +179,8 @@ downloadS3File <- function(bucketName, keyName, localFile){
 ##' @param slaveInstanceType EC2 instance type for the slave nodes
 ##' @param location EC2 location name for the cluster
 ##' @param ec2KeyName EC2 Key used for logging into the main node. Use the user name 'hadoop'
+##' @param copy.image T/F whether to copy the entire local environment to the nodes. If this feels
+##' fast and loose... you're right! It's nuts. Use it with caution. Very handy when you really need it.
 ##' @return an emrlapply() cluster object with appropriate fields
 ##'   populated. Keep in mind that this creates the cluster and starts the cluster running.
 ##' @author James "JD" Long
@@ -197,7 +199,8 @@ createCluster <- function(numInstances=2,
                           masterInstanceType="m1.small",
                           slaveInstanceType="m1.small",
                           location = "us-east-1a",
-                          ec2KeyName=NULL                      
+                          ec2KeyName=NULL,
+                          copy.image=FALSE
                           ){
   ## this used to be an argument but not bootstrapping
   ## caused too many problems
@@ -214,13 +217,15 @@ createCluster <- function(numInstances=2,
                         masterInstanceType = masterInstanceType,
                         slaveInstanceType = slaveInstanceType,
                         location = location,
-                        ec2KeyName = ec2KeyName     
+                        ec2KeyName = ec2KeyName ,
+                        copy.image = copy.image
                         )
   
   localTempDir <- paste(tempdir(),
                         paste(sample(c(0:9, letters), 10, rep=T), collapse=""),
                         "-segue",
                         sep="")
+  
   clusterObject$localTempDir <- localTempDir
   clusterObject$localTempDirOut <- paste(localTempDir, "/out", sep="")
 
@@ -245,6 +250,14 @@ createCluster <- function(numInstances=2,
     uploadS3File(s3TempDir, system.file("bootstrapLatestR.sh", package="segue") )
   }
   clusterObject$bootStrapLatestR <- bootStrapLatestR
+
+  ## if copy.image is TRUE then save an image and  use the fileOnNodes
+  ## feature to add the saved image to the nodes
+  if (copy.image == TRUE) {
+    imageFile <- paste( localTempDir, "/local-workspace-image.RData", sep="" )
+    save.image( file=imageFile, compress="xz" )
+    clusterObject$filesOnNodes = c(clusterObject$filesOnNodes, imageFile)
+  }
   
   # start cluster
   jobFlowId <- startCluster(clusterObject)
@@ -326,7 +339,7 @@ startCluster <- function(clusterObject){
    bootStrapList$add(bootStrapConfig)
   }
 
-  if (is.null(clusterObject$filesOnNodes) == FALSE) { #test this shit - putting files on each node
+  if (is.null(clusterObject$filesOnNodes) == FALSE) { # putting files on each node
 
     ## build a batch file that includes each element of filesOnNodes
     ## then add the batch file as a boot strap action

@@ -7,6 +7,10 @@ trimWhiteSpace <- function(line) gsub("(^ +)|( +$)", "", line)
 try( fileList <- list.files("/tmp/segue-upload/", full.names=TRUE ), silent=TRUE )
 try( file.copy(fileList, getwd(), overwrite = TRUE), silent=TRUE)
 
+## try to load the saved workplace image file. This will silently
+## fail if there is no workspace file to load
+try( load(file="local-workspace-image.RData"), silent=TRUE )
+
 con <- file("stdin", open = "r")
 
 ## the libPath is set to include the process ID so that
