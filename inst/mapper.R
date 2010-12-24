@@ -40,7 +40,7 @@ library(caTools,  lib=libPath)
 
 
 for (myPackage in cranPackages){
-  #if a package fails to install or load everything bombs so added try()
+  try(install.packages(myPackage, lib=libPath) )
   try(library(myPackage,  lib=libPath, character.only = T))
 }
 
