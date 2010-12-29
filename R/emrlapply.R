@@ -45,7 +45,6 @@ emrlapply <- function(clusterObject, X, FUN,  ... ) {
   uploadS3File(clusterObject$s3TempDir, paste(objectsFileName, sep=""))
     
   #upload the mapper to S3
-  #needs to be altered for a package
   uploadS3File(clusterObject$s3TempDir, system.file("mapper.R", package="segue"))
 
   #serialize the X list to a temp file

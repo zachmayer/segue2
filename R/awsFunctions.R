@@ -248,6 +248,8 @@ createCluster <- function(numInstances=2,
   if (bootStrapLatestR==TRUE) {
     ##TODO: error checking in the uploadS3File function
     uploadS3File(s3TempDir, system.file("bootstrapLatestR.sh", package="segue") )
+    uploadS3File(s3TempDir, system.file("update.R", package="segue") )
+    
   }
   clusterObject$bootStrapLatestR <- bootStrapLatestR
 
@@ -334,9 +336,20 @@ startCluster <- function(clusterObject){
   
    bootStrapConfig <- new( com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig)
      with( bootStrapConfig, setScriptBootstrapAction(scriptBootActionConfig))
-     with( bootStrapConfig, setName("RBootStrap"))
+     with( bootStrapConfig, setName("R-InstallLatest"))
  
    bootStrapList$add(bootStrapConfig)
+
+   ## update packages
+   scriptBootActionConfig <- new(com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig)
+   scriptBootActionConfig$setPath(paste("s3://", s3TempDir, "/update.R", sep=""))
+  
+   bootStrapConfig <- new( com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig)
+     with( bootStrapConfig, setScriptBootstrapAction(scriptBootActionConfig))
+     with( bootStrapConfig, setName("R-UpdatePackages"))
+ 
+   bootStrapList$add(bootStrapConfig)
+   
   }
 
   if (is.null(clusterObject$filesOnNodes) == FALSE) { # putting files on each node
@@ -376,7 +389,7 @@ startCluster <- function(clusterObject){
    bootStrapList$add(bootStrapConfig)
   }
 
-  if (is.null(clusterObject$instancesPerNode) == FALSE) { #test this shit
+  if (is.null(clusterObject$instancesPerNode) == FALSE) { #sersiously... test this
    scriptBootActionConfig <- new(com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig)
    scriptBootActionConfig$setPath("s3://elasticmapreduce/bootstrap-actions/configure-hadoop")
 
@@ -399,9 +412,12 @@ startCluster <- function(clusterObject){
   
    request$setBootstrapActions(bootStrapList)
   
-  if ( is.null( clusterObject$ec2KeyName == TRUE ) ) {
+  if ( is.null( clusterObject$ec2KeyName ) != TRUE ) {
       conf$setEc2KeyName(clusterObject$ec2KeyName)
   }
+  
+  conf$setHadoopVersion("0.20")
+  
   #debugging... set to my personal key
   #conf$setEc2KeyName("ec2ApiTools")
 
@@ -412,7 +428,7 @@ startCluster <- function(clusterObject){
   conf$setPlacement(new(com.amazonaws.services.elasticmapreduce.model.PlacementType, clusterObject$location))
   conf$setSlaveInstanceType( clusterObject$slaveInstanceType )
   request$setInstances(conf)
-  request$setLogUri(paste("s3://", s3TempDir, "/logs ", sep=""))
+  request$setLogUri(paste("s3://", s3TempDir, "/logs", sep=""))
   jobFlowName <- paste("RJob-", date(), sep="")
   request$setName(jobFlowName)
 
@@ -494,7 +510,9 @@ submitJob <- function(clusterObject, stopClusterOnComplete=FALSE){
   enableDebugging <- clusterObject$enableDebugging
  
   try(deleteS3Bucket(s3TempDirOut), silent=TRUE)
-
+  unlink(clusterObject$localTempDirOut, recursive = TRUE)
+  dir.create(clusterObject$localTempDirOut)
+  
   jobFlowId <- clusterObject$jobFlowId
 
   if (enableDebugging==TRUE){

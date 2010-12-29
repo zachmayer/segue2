@@ -25,7 +25,7 @@ options(repos=c(CRAN="http://cran.r-project.org/"))
 dir.create(libPath)
 
 load("./emrData.RData") #contains:
-                           # myPackages - list of packages
+                           # cranPackages - list of packages
                            # myFun - Function to apply
                            # funArgs - the arguments passed
                            # rObjectsOnNodes - a NAMED list of R objects the users wants
@@ -41,10 +41,12 @@ library(caTools,  lib=libPath)
 
 for (myPackage in cranPackages){
   try(install.packages(myPackage, lib=libPath) )
-  try(library(myPackage,  lib=libPath, character.only = T))
+  try(library(myPackage,  lib=libPath, character.only = TRUE))
+  cat("finished installing")
 }
 
 while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0) {
+  cat("started readlines \n")
   key <-  as.numeric(trimWhiteSpace(strsplit(line, split=",")[[1]][[1]]))
   value <- unserialize(base64decode(strsplit(line, split=",")[[1]][[2]], "raw"))
   value <- list(value)
