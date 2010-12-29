@@ -1,5 +1,3 @@
-
-
 #' A segue into parallel processing on Amazon's Web Services.
 #' A segue into parallel processing on Amazon's Web Services. Includes a
 #' parallel lapply function for the Elastic Map Reduce (EMR) engine. This is
@@ -8,7 +6,6 @@
 #' package. If you are CPU bound this might be a useful package.
 #' 
 #' "We are stuck with technology when what we really want is just stuff that works." – Douglas Adams
-#' 
 #' 
 #' \tabular{ll}{ Package: \tab segue\cr Type: \tab Package\cr Version: \tab
 #' 0.01\cr Date: \tab 2010-12-08\cr License: \tab MIT License \cr LazyLoad:
