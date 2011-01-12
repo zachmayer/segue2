@@ -229,9 +229,9 @@ createCluster <- function(numInstances=2,
   clusterObject$localTempDir <- localTempDir
   clusterObject$localTempDirOut <- paste(localTempDir, "/out", sep="")
 
-  system(paste("mkdir", localTempDir))
-  system(paste("mkdir", clusterObject$localTempDirOut))
-
+  dir.create(localTempDir, showWarnings = TRUE, recursive = TRUE, mode = "0777")
+  dir.create(clusterObject$localTempDirOut, showWarnings = TRUE, recursive = TRUE, mode = "0777")
+  
   s3TempDir <- tolower(unlist(strsplit(localTempDir, "/"))[length(unlist(strsplit(localTempDir, "/")))])
   deleteS3Bucket(s3TempDir)
   clusterObject$s3TempDir <- s3TempDir
@@ -244,7 +244,7 @@ createCluster <- function(numInstances=2,
   ## TODO: error check this
   makeS3Bucket(s3TempDir)
   
-  #upload the bootstrapper to S3 if needed
+  #upload the bootstrapper to S3 
   if (bootStrapLatestR==TRUE) {
     ##TODO: error checking in the uploadS3File function
     uploadS3File(s3TempDir, system.file("bootstrapLatestR.sh", package="segue") )
