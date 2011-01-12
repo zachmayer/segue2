@@ -180,6 +180,11 @@ downloadS3File <- function(bucketName, keyName, localFile){
 ##' @param location EC2 location name for the cluster
 ##' @param ec2KeyName EC2 Key used for logging into the main node. Use the user name 'hadoop'
 ##' @param copy.image T/F whether to copy the entire local environment to the nodes. If this feels
+##' @param otherBootstrapActions a list-of-lists of other bootstrap actions to run; chlid list members
+##    are: "name" == unique identifier of this bootstrap action ; "localFile" == path to local script
+##    to be uploaded to the temp area in S3; "s3file" == path to an existing script in S3 (won't be
+##    uploaded to the temp area); "args" == vector of character arguments.   "localFile" and "s3file"
+##    are mutually exclusive but one is required; "args" is optional.
 ##' fast and loose... you're right! It's nuts. Use it with caution. Very handy when you really need it.
 ##' @return an emrlapply() cluster object with appropriate fields
 ##'   populated. Keep in mind that this creates the cluster and starts the cluster running.
@@ -200,7 +205,8 @@ createCluster <- function(numInstances=2,
                           slaveInstanceType="m1.small",
                           location = "us-east-1a",
                           ec2KeyName=NULL,
-                          copy.image=FALSE
+                          copy.image=FALSE ,
+                          otherBootstrapActions=NULL
                           ){
   ## this used to be an argument but not bootstrapping
   ## caused too many problems
@@ -218,7 +224,8 @@ createCluster <- function(numInstances=2,
                         slaveInstanceType = slaveInstanceType,
                         location = location,
                         ec2KeyName = ec2KeyName ,
-                        copy.image = copy.image
+                        copy.image = copy.image ,
+                        otherBootstrapActions = otherBootstrapActions
                         )
   
   localTempDir <- paste(tempdir(),
@@ -350,6 +357,40 @@ startCluster <- function(clusterObject){
  
    bootStrapList$add(bootStrapConfig)
    
+  }
+
+  ## handle additional bootstrap actions, if requested.
+  if ( ! is.null(clusterObject$otherBootstrapActions) ){
+    ## TODO: more graceful exit here? or would stopifnot() be appropriate, in this case?
+    stopifnot( "list" == class(clusterObject$otherBootstrapActions) )
+
+    invisible( sapply( clusterObject$otherBootstrapActions , function( action ){
+      scriptBootActionConfig <- new(com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig)
+
+      ## are we uploading a local file to run? or will we use a script that already exists in
+      ## (a non-temporary) S3 bucket?
+      if( ! is.null( action$localFile ) ){
+        uploadS3File(clusterObject$s3TempDir , action$localFile)
+        scriptBootActionConfig$setPath(paste("s3://", clusterObject$s3TempDir, "/" , basename( action$localFile ) , sep=""))
+      }else if( ! is.null( action$s3file ) ){
+        scriptBootActionConfig$setPath(action$s3file)
+      }
+
+      if( ! is.null( action$args ) ){
+        ## TODO: proper quoting around args? or leave that for caller?
+        argsAsList <- new( java.util.ArrayList )
+        sapply( action$args , function(item){ argsAsList$add(item) } )
+        scriptBootActionConfig$withArgs(argsAsList)
+      }
+
+  
+      bootStrapConfig <- new( com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig)
+        with( bootStrapConfig, setScriptBootstrapAction(scriptBootActionConfig))
+        with( bootStrapConfig, setName(action$name))
+
+      bootStrapList$add(bootStrapConfig)
+    
+    } ) )
   }
 
   if (is.null(clusterObject$filesOnNodes) == FALSE) { # putting files on each node
