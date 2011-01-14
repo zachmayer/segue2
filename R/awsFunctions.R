@@ -438,7 +438,7 @@ startCluster <- function(clusterObject){
    argList$add( "-s" )
    argList$add( paste( "mapred.tasktracker.map.tasks.maximum=", clusterObject$instancesPerNode, sep="") )
    argList$add( "-s" )
-   argList$add( paste( "mapred.tasktracker.reducer.tasks.maximum=", clusterObject$instancesPerNode, sep="") )
+   argList$add( paste( "mapred.tasktracker.reduce.tasks.maximum=", clusterObject$instancesPerNode, sep="") )
  
    scriptBootActionConfig$setArgs( argList )
                                   
@@ -586,9 +586,9 @@ submitJob <- function(clusterObject, stopClusterOnComplete=FALSE){
   argList$add( "-output" )
   argList$add( paste("s3n://", s3TempDirOut, "/", sep="") )
   argList$add( "-mapper" )
-  argList$add( paste("s3n://", s3TempDir, "/mapper.R", sep="" ))
-  argList$add( "-reducer" )
   argList$add( "cat" )
+  argList$add( "-reducer" )
+  argList$add( paste("s3n://", s3TempDir, "/mapper.R", sep="" ) )
 
   hadoopJarStep$setArgs(argList)
 
