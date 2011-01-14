@@ -46,14 +46,15 @@ for (myPackage in cranPackages){
 }
 
 while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0) {
-  cat("started readlines \n")
-  key <-  as.numeric(trimWhiteSpace(strsplit(line, split=",")[[1]][[1]]))
-  value <- unserialize(base64decode(strsplit(line, split=",")[[1]][[2]], "raw"))
-  value <- list(value)
-  value <- c(value, funArgs)
-  result <- do.call(myFun, value) # can you believe this one short line does
-                                  # all the work?!? 
-  
+  t <- try( { 
+    cat("started readlines \n")
+    key <-  as.numeric(trimWhiteSpace(strsplit(line, split=",")[[1]][[1]]))
+    value <- unserialize(base64decode(strsplit(line, split=",")[[1]][[2]], "raw"))
+    value <- list(value)
+    value <- c(value, funArgs)
+    result <- do.call(myFun, value) # can you believe this one short line does
+  } )                                # all the work?!?
+  if (inherits(t, "try-error")) result <- "error"
   #serialize and encode the result
   sresult <- paste("<result>,", key, ",", base64encode(serialize(result, NULL, ascii=T)), "\n", sep="")
   cat(sresult, "|\n", sep = "")
