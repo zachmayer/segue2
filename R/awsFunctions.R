@@ -469,7 +469,7 @@ startCluster <- function(clusterObject){
   conf$setPlacement(new(com.amazonaws.services.elasticmapreduce.model.PlacementType, clusterObject$location))
   conf$setSlaveInstanceType( clusterObject$slaveInstanceType )
   request$setInstances(conf)
-  request$setLogUri(paste("s3://", s3TempDir, "_logs", sep=""))
+  request$setLogUri(paste("s3://", s3TempDir, "-logs", sep=""))
   jobFlowName <- paste("RJob-", date(), sep="")
   request$setName(jobFlowName)
 

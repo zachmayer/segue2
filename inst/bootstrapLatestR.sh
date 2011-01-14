@@ -17,6 +17,9 @@ sudo apt-get update
 sudo apt-get install --yes --force-yes gfortran-4.1 gfortran-4.2
 sudo apt-get -t lenny-cran install --yes --force-yes r-base r-base-dev
 
+sudo apt-get install --yes --force-yes r-cran-hmisc
+sudo apt-get install --yes --force-yes r-cran-rjava
+
 #install littler
 sudo apt-get install littler
 
