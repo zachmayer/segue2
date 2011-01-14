@@ -517,17 +517,19 @@ stopCluster <- function(clusterObject){
   ## I have no idea why AWS needs sleep before
   ## I can delete the temp dirs, but these fail
   ## if I don't have the sleep
-  Sys.sleep(15)
-  try( deleteS3Bucket(clusterObject$s3TempDir), silent=TRUE )
-  try( deleteS3Bucket(clusterObject$s3TempDirOut), silent=TRUE )
+  Sys.sleep(10)
+  try( deleteS3Bucket( clusterObject$s3TempDir ), silent=TRUE )
+  try( deleteS3Bucket( paste( clusterObject$s3TempDir, "-logs", sep="" ) ), silent=TRUE )
+  try( deleteS3Bucket( clusterObject$s3TempDirOut ), silent=TRUE )
 
   ## something weird is going on... I have to do this twice or it
   ## does not fully delete the s3TempDir's subdirectory
   ## will need to give this some attention later
   Sys.sleep(15)
-  try( deleteS3Bucket(clusterObject$s3TempDir), silent=TRUE )
-  try( deleteS3Bucket(clusterObject$s3TempDirOut), silent=TRUE )
-  
+  try( deleteS3Bucket( clusterObject$s3TempDir ), silent=TRUE )
+  try( deleteS3Bucket( paste( clusterObject$s3TempDir, "-logs", sep="" ) ), silent=TRUE )
+  try( deleteS3Bucket( clusterObject$s3TempDirOut ), silent=TRUE )
+ 
 }
 
 ##' Submits a job to a running cluster
