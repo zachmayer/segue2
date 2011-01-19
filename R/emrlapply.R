@@ -84,7 +84,7 @@ emrlapply <- function(clusterObject, X, FUN,  ... ) {
     #require(caTools)
     lines <- strsplit(readLines(paste(myTempDirOut, "/combinedOutput.csv", sep="")),
                       split=",")
-    output <- NULL
+    output <- list()
     
     for (i in 1:length(lines)){
       output[[as.numeric(lines[[i]][[1]])]] <- (unserialize(

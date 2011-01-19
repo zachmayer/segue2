@@ -54,7 +54,7 @@ while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0) {
     value <- c(value, funArgs)
     result <- do.call(myFun, value) # can you believe this one short line does
   } )                                # all the work?!?
-  if (inherits(t, "try-error")) result <- "error"
+  if (inherits(t, "try-error")) result <- paste( "error caught by Segue:", geterrmessage() )
   #serialize and encode the result
   sresult <- paste("<result>,", key, ",", base64encode(serialize(result, NULL, ascii=T)), "\n", sep="")
   cat(sresult, "|\n", sep = "")
