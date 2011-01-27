@@ -541,10 +541,12 @@ stopCluster <- function(clusterObject){
 ##' @param clusterObject a cluster object to submit to
 ##' @param stopClusterOnComplete set to true if you want the cluster to be shut down
 ##' after job completes
+##' @param taskTimeout maximum time a single unit of work can run (in minutes)
 ##' @return Execution status of this job
 ##' 
 ##' @export
-submitJob <- function(clusterObject, stopClusterOnComplete=FALSE){
+submitJob <- function(clusterObject, stopClusterOnComplete=FALSE, taskTimeout=10){
+
   jobFlowId       <- clusterObject$jobFlowId
   s3TempDir       <- clusterObject$s3TempDir
   s3TempDirOut    <- clusterObject$s3TempDirOut
@@ -587,6 +589,12 @@ submitJob <- function(clusterObject, stopClusterOnComplete=FALSE){
   argList$add( paste("s3n://", s3TempDir, "/mapper.R", sep="" ))
   argList$add( "-reducer" )
   argList$add( "cat" )
+
+  # the task timeout is passed to us in minutes, but AWS/EMR expects it in milliseconds
+  taskTimeoutMilliseconds <- taskTimeout * 60 * 1000
+  argList$add( "-D" )
+  argList$add( paste( "mapred.task.timeout=" , taskTimeoutMilliseconds , sep="" ) )
+
 
   hadoopJarStep$setArgs(argList)
 
