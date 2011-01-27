@@ -85,7 +85,7 @@ emrlapply <- function(clusterObject, X, FUN, taskTimeout=10, ... ) {
     #require(caTools)
     lines <- strsplit(readLines(paste(myTempDirOut, "/combinedOutput.csv", sep="")),
                       split=",")
-    output <- NULL
+    output <- list()
     
     for (i in 1:length(lines)){
       output[[as.numeric(lines[[i]][[1]])]] <- (unserialize(
@@ -97,5 +97,49 @@ emrlapply <- function(clusterObject, X, FUN, taskTimeout=10, ... ) {
     }
     return(as.list(output))
 }
+
+##' Internal function used for assembling the output produced by the EMR process
+##'
+##' Internal function used for assembling the output produced by the EMR process
+##' 
+##' @param myTempDirOut the temp directory where the output files from the EMR
+##'                     process are kept. Must be local, not S3.
+##' @return Returns a list of output that matches the input list in length
+##' @author James "JD" Long
+assembleOutput <- function(myTempDirOut) {
+
+    #open files
+  returnedFiles <- list.files(path=myTempDirOut, pattern="part")
+    #yes, I read all the results into R then write them out to a text file
+    #There was a reason for doing this, but I don't remember it
+    #this could all be done in one step
+  combinedOutputFile <- file(paste(myTempDirOut, "/combinedOutput.csv", sep=""), "w")
+  unparsedOutput <- NULL
+    for (file in returnedFiles){
+        lines <- readLines(paste(myTempDirOut, "/", file, sep="")) 
+        for (line in lines) {
+          if (substr(line, 1, 9) == "<result>,") {
+            write(substr(line, 10, nchar(line)), file=combinedOutputFile)
+          }
+        }
+    }
+    close(combinedOutputFile)
+    
+    #require(caTools)
+    lines <- strsplit(readLines(paste(myTempDirOut, "/combinedOutput.csv", sep="")),
+                      split=",")
+    output <- list()
+    
+    for (i in 1:length(lines)){
+      output[[as.numeric(lines[[i]][[1]])]] <- (unserialize(
+                                                 base64decode(
+                                                   substr(
+                                                     lines[[i]][[2]],
+                                                          1,
+                                                          nchar(lines[[i]][[2]])-1), "raw")))
+    }
+    return(as.list(output))
+}
+
 
 

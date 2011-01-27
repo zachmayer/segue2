@@ -236,9 +236,9 @@ createCluster <- function(numInstances=2,
   clusterObject$localTempDir <- localTempDir
   clusterObject$localTempDirOut <- paste(localTempDir, "/out", sep="")
 
-  system(paste("mkdir", localTempDir))
-  system(paste("mkdir", clusterObject$localTempDirOut))
-
+  dir.create(localTempDir, showWarnings = TRUE, recursive = TRUE, mode = "0777")
+  dir.create(clusterObject$localTempDirOut, showWarnings = TRUE, recursive = TRUE, mode = "0777")
+  
   s3TempDir <- tolower(unlist(strsplit(localTempDir, "/"))[length(unlist(strsplit(localTempDir, "/")))])
   deleteS3Bucket(s3TempDir)
   clusterObject$s3TempDir <- s3TempDir
@@ -251,7 +251,7 @@ createCluster <- function(numInstances=2,
   ## TODO: error check this
   makeS3Bucket(s3TempDir)
   
-  #upload the bootstrapper to S3 if needed
+  #upload the bootstrapper to S3 
   if (bootStrapLatestR==TRUE) {
     ##TODO: error checking in the uploadS3File function
     uploadS3File(s3TempDir, system.file("bootstrapLatestR.sh", package="segue") )
@@ -438,7 +438,7 @@ startCluster <- function(clusterObject){
    argList$add( "-s" )
    argList$add( paste( "mapred.tasktracker.map.tasks.maximum=", clusterObject$instancesPerNode, sep="") )
    argList$add( "-s" )
-   argList$add( paste( "mapred.tasktracker.reducer.tasks.maximum=", clusterObject$instancesPerNode, sep="") )
+   argList$add( paste( "mapred.tasktracker.reduce.tasks.maximum=", clusterObject$instancesPerNode, sep="") )
  
    scriptBootActionConfig$setArgs( argList )
                                   
@@ -469,7 +469,7 @@ startCluster <- function(clusterObject){
   conf$setPlacement(new(com.amazonaws.services.elasticmapreduce.model.PlacementType, clusterObject$location))
   conf$setSlaveInstanceType( clusterObject$slaveInstanceType )
   request$setInstances(conf)
-  request$setLogUri(paste("s3://", s3TempDir, "/logs", sep=""))
+  request$setLogUri(paste("s3://", s3TempDir, "-logs", sep=""))
   jobFlowName <- paste("RJob-", date(), sep="")
   request$setName(jobFlowName)
 
@@ -517,17 +517,19 @@ stopCluster <- function(clusterObject){
   ## I have no idea why AWS needs sleep before
   ## I can delete the temp dirs, but these fail
   ## if I don't have the sleep
-  Sys.sleep(15)
-  try( deleteS3Bucket(clusterObject$s3TempDir), silent=TRUE )
-  try( deleteS3Bucket(clusterObject$s3TempDirOut), silent=TRUE )
+  Sys.sleep(10)
+  try( deleteS3Bucket( clusterObject$s3TempDir ), silent=TRUE )
+  try( deleteS3Bucket( paste( clusterObject$s3TempDir, "-logs", sep="" ) ), silent=TRUE )
+  try( deleteS3Bucket( clusterObject$s3TempDirOut ), silent=TRUE )
 
   ## something weird is going on... I have to do this twice or it
   ## does not fully delete the s3TempDir's subdirectory
   ## will need to give this some attention later
   Sys.sleep(15)
-  try( deleteS3Bucket(clusterObject$s3TempDir), silent=TRUE )
-  try( deleteS3Bucket(clusterObject$s3TempDirOut), silent=TRUE )
-  
+  try( deleteS3Bucket( clusterObject$s3TempDir ), silent=TRUE )
+  try( deleteS3Bucket( paste( clusterObject$s3TempDir, "-logs", sep="" ) ), silent=TRUE )
+  try( deleteS3Bucket( clusterObject$s3TempDirOut ), silent=TRUE )
+ 
 }
 
 ##' Submits a job to a running cluster
@@ -579,6 +581,12 @@ submitJob <- function(clusterObject, stopClusterOnComplete=FALSE, taskTimeout=10
   hadoopJarStep <- new(com.amazonaws.services.elasticmapreduce.model.HadoopJarStepConfig)
   hadoopJarStep$setJar("/home/hadoop/contrib/streaming/hadoop-streaming.jar")
   argList <- new( java.util.ArrayList )
+
+  # the task timeout is passed to us in minutes, but AWS/EMR expects it in milliseconds
+  taskTimeoutMilliseconds <- taskTimeout * 60 * 1000
+  argList$add( "-D" )
+  argList$add( paste( "mapred.task.timeout=" , taskTimeoutMilliseconds , sep="" ) )
+
   argList$add( "-cacheFile" )
   argList$add( paste("s3n://", s3TempDir, "/emrData.RData#emrData.RData", sep=""))
   argList$add( "-input" )
@@ -586,14 +594,9 @@ submitJob <- function(clusterObject, stopClusterOnComplete=FALSE, taskTimeout=10
   argList$add( "-output" )
   argList$add( paste("s3n://", s3TempDirOut, "/", sep="") )
   argList$add( "-mapper" )
-  argList$add( paste("s3n://", s3TempDir, "/mapper.R", sep="" ))
-  argList$add( "-reducer" )
   argList$add( "cat" )
-
-  # the task timeout is passed to us in minutes, but AWS/EMR expects it in milliseconds
-  taskTimeoutMilliseconds <- taskTimeout * 60 * 1000
-  argList$add( "-D" )
-  argList$add( paste( "mapred.task.timeout=" , taskTimeoutMilliseconds , sep="" ) )
+  argList$add( "-reducer" )
+  argList$add( paste("s3n://", s3TempDir, "/mapper.R", sep="" ) )
 
 
   hadoopJarStep$setArgs(argList)
