@@ -180,19 +180,19 @@ downloadS3File <- function(bucketName, keyName, localFile){
 ##' @param location EC2 location name for the cluster
 ##' @param ec2KeyName EC2 Key used for logging into the main node. Use the user name 'hadoop'
 ##' @param copy.image T/F whether to copy the entire local environment to the nodes. If this feels
+##' fast and loose... you're right! It's nuts. Use it with caution. Very handy when you really need it.
 ##' @param otherBootstrapActions a list-of-lists of other bootstrap actions to run; chlid list members
 ##    are: "name" == unique identifier of this bootstrap action ; "localFile" == path to local script
 ##    to be uploaded to the temp area in S3; "s3file" == path to an existing script in S3 (won't be
 ##    uploaded to the temp area); "args" == vector of character arguments.   "localFile" and "s3file"
 ##    are mutually exclusive but one is required; "args" is optional.
-##' fast and loose... you're right! It's nuts. Use it with caution. Very handy when you really need it.
 ##' @return an emrlapply() cluster object with appropriate fields
 ##'   populated. Keep in mind that this creates the cluster and starts the cluster running.
 ##' @author James "JD" Long
 ##' @examples
 ##' \dontrun{
 ##' myCluster   <- createCluster(numInstances=2,
-##' bootStrapLatestR=TRUE, cranPackages=c("Hmisc", "plyr"))
+##'  cranPackages=c("Hmisc", "plyr"))
 ##' }
 ##' @export
 createCluster <- function(numInstances=2,

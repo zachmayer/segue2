@@ -1,6 +1,7 @@
 Package: segue
 Type: Package
-Title: A segue into parallel processing on Amazon's Web Services. Includes a parallel lapply function for the Elastic Map Reduce (EMR) engine
+Title: A segue into parallel processing on Amazon's Web Services. Includes a parallel lapply function for the Elastic Map
+    Reduce (EMR) engine
 Version: 0.02
 Date: 2010-12-30
 Author: James Long
