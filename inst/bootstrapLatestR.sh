@@ -33,9 +33,19 @@ sudo /etc/init.d/cron start
 ## now that libc6 is installed R should install
 ## the libc6 issue was a total pain in my ass
 ## Amazon needs to provide custom AMIs for EMR
+
+## now install R
 sudo apt-get install --yes --force-yes r-base r-base-dev
 sudo apt-get install --yes r-cran-hmisc
+
+## rJava and latest Sun Java
+sudo apt-get install --yes sun-java6-jdk sun-java6-jre
 sudo apt-get install --yes r-cran-rjava
+
+## get rJava working, by any means possible
+echo "### Hacked in to get rJava working ###" | sudo tee -a  /home/hadoop/.bashrc
+echo "export JAVA_HOME=/usr/lib/jvm/java-6-sun/jre" | sudo tee -a  /home/hadoop/.bashrc
+sudo env JAVA_HOME=/usr/lib/jvm/java-6-sun/jre R CMD javareconf
 
 #install littler
 sudo apt-get install littler
@@ -46,4 +56,5 @@ sudo ln -s /usr/lib/libgfortran.so.3 /usr/lib/libgfortran.so
 # for the package update script to run
 # the user hadoop needs to own the R library
 sudo chown -R hadoop /usr/lib/R/library
+
 

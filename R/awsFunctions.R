@@ -186,6 +186,7 @@ downloadS3File <- function(bucketName, keyName, localFile){
 ##    to be uploaded to the temp area in S3; "s3file" == path to an existing script in S3 (won't be
 ##    uploaded to the temp area); "args" == vector of character arguments.   "localFile" and "s3file"
 ##    are mutually exclusive but one is required; "args" is optional.
+##' @param sourcePackagesToInstall vector of full paths to source packages to be installed on each node
 ##' @return an emrlapply() cluster object with appropriate fields
 ##'   populated. Keep in mind that this creates the cluster and starts the cluster running.
 ##' @author James "JD" Long
@@ -206,7 +207,8 @@ createCluster <- function(numInstances=2,
                           location = "us-east-1a",
                           ec2KeyName=NULL,
                           copy.image=FALSE ,
-                          otherBootstrapActions=NULL
+                          otherBootstrapActions=NULL,
+                          sourcePackagesToInstall=NULL
                           ){
   ## this used to be an argument but not bootstrapping
   ## caused too many problems
@@ -225,7 +227,8 @@ createCluster <- function(numInstances=2,
                         location = location,
                         ec2KeyName = ec2KeyName ,
                         copy.image = copy.image ,
-                        otherBootstrapActions = otherBootstrapActions
+                        otherBootstrapActions = otherBootstrapActions,
+                        sourcePackagesToInstall = sourcePackagesToInstall
                         )
   
   localTempDir <- paste(tempdir(),
@@ -429,6 +432,47 @@ startCluster <- function(clusterObject){
  
    bootStrapList$add(bootStrapConfig)
   }
+
+  
+  if (is.null(clusterObject$sourcePackagesToInstall) == FALSE) {
+
+    ## build a batch file that includes each file in sourcePackagesToInstall
+    ## then add the batch file as a boot strap action
+
+    ## open the output file (installSourcePackages.sh) in clusterObject$tempDir
+    ## open an output file connection
+    outfile <- file( paste( clusterObject$localTempDir, "/installSourcePackages.sh", sep="" ), "w" )  
+    cat("#!/bin/bash", "", file = outfile, sep = "\n")
+    cat("mkdir /tmp/segue-source-packages/", "", file = outfile, sep = "\n")
+     ## for each element in sourcePackagesToInstall add a hadoop -fs line
+    for ( file in clusterObject$sourcePackagesToInstall ){
+      remotePath <- paste( "/tmp/segue-source-packages/", tail(strsplit(file,"/")[[1]], 1), sep="" )
+      fileName <- tail(strsplit(file,"/")[[1]], 1)
+      s3Path <- paste( "s3://", clusterObject$s3TempDir, "/", fileName, sep="" )
+      cat( paste( "hadoop fs -get ", s3Path, remotePath)
+          , file = outfile, sep = "\n" )
+      cat( "\n", file = outfile )
+      cat( "sudo R CMD INSTALL ", remotePath, "\n", file = outfile, sep = "" )
+      
+      # copy each file to S3
+      uploadS3File( clusterObject$s3TempDir, file )
+    }
+    close( outfile )
+     # copy installSourcePackages.sh) to clusterObject$s3TempDir
+    uploadS3File( clusterObject$s3TempDir, paste( clusterObject$localTempDir, "/installSourcePackages.sh", sep="" ) )
+
+     # add a bootstrap action that runs bootStrapFiles.sh
+   scriptBootActionConfig <- new(com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig)
+   scriptBootActionConfig$setPath(paste("s3://", s3TempDir, "/installSourcePackages.sh", sep=""))
+  
+   bootStrapConfig <- new( com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig)
+     with( bootStrapConfig, setScriptBootstrapAction(scriptBootActionConfig))
+     with( bootStrapConfig, setName("RinstallSourcePackages"))
+ 
+   bootStrapList$add(bootStrapConfig)
+  }
+
+  
 
   if (is.null(clusterObject$instancesPerNode) == FALSE) { #sersiously... test this
    scriptBootActionConfig <- new(com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig)
