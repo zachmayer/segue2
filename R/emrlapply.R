@@ -7,11 +7,12 @@
 ##' @param X list to which the function will be applied
 ##' @param FUN function to apply
 ##' @param clusterObject cluster on which to run the process
+##' @param taskTimeout maximum time a single unit of work can run (in minutes)
 ##' @param \dots other params to pass to FUN
 ##' @return Output as a list
 ##' 
 ##' @export
-emrlapply <- function(clusterObject, X, FUN,  ... ) {
+emrlapply <- function(clusterObject, X, FUN, taskTimeout=10, ... ) {
   #set up a local temp directory
   myTempDir <- clusterObject$localTempDir
 
@@ -54,7 +55,7 @@ emrlapply <- function(clusterObject, X, FUN,  ... ) {
   #now upload stream.txt to EMR
   uploadS3File(clusterObject$s3TempDir, streamFile)
   
-  finalStatus <- submitJob(clusterObject) 
+  finalStatus <- submitJob(clusterObject=clusterObject, taskTimeout=taskTimeout) 
   myTempDirOut <- clusterObject$localTempDirOut
 
   

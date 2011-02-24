@@ -1,7 +1,8 @@
 \name{setCredentials}
 \alias{setCredentials}
 \title{##' AWS Support Function: set up credentials...}
-\usage{setCredentials(awsAccessKeyText, awsSecretKeyText, setEnvironmentVariables=TRUE)}
+\usage{setCredentials(awsAccessKeyText, awsSecretKeyText,
+    setEnvironmentVariables=TRUE)}
 \description{##' AWS Support Function: set up credentials}
 \details{sets up the credentials needed to access AWS and optionally sets environment
 variables for auto loading of credentials in the future}
