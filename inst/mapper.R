@@ -2,14 +2,6 @@
 
 trim <- function(line) gsub("(^ +)|( +$)", "", line)
 
-## files from filesOnNodes are uploaded to a tmp directory
-## this copies the files to the current working directory
-try( fileList <- list.files("/tmp/segue-upload/", full.names=TRUE ), silent=TRUE )
-try( file.copy(fileList, getwd(), overwrite = TRUE), silent=TRUE)
-
-## try to load the saved workplace image file. This will silently
-## fail if there is no workspace file to load
-try( load(file="local-workspace-image.RData"), silent=TRUE )
 
 con <- file("stdin", open = "r")
 
@@ -44,6 +36,18 @@ for (myPackage in cranPackages){
   try(library(myPackage,  lib=libPath, character.only = TRUE))
   cat("finished installing")
 }
+
+## Feb 2010: JDL: moved this down in order to load CRAN packages
+##   before the files from the nodes. Objects dependent on
+##   CRAN packages would fail if loaded before CRAN packs
+## files from filesOnNodes are uploaded to a tmp directory
+## this copies the files to the current working directory
+try( fileList <- list.files("/tmp/segue-upload/", full.names=TRUE ), silent=TRUE )
+try( file.copy(fileList, getwd(), overwrite = TRUE), silent=TRUE)
+
+## try to load the saved workplace image file. This will silently
+## fail if there is no workspace file to load
+try( load(file="local-workspace-image.RData"), silent=TRUE )
 
 while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0) {
   t <- try( { 
