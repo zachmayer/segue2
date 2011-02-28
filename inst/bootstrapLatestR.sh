@@ -31,7 +31,16 @@ echo "export JAVA_HOME=/usr/lib/jvm/java-6-sun/jre" | sudo tee -a  /home/hadoop/
 sudo env JAVA_HOME=/usr/lib/jvm/java-6-sun/jre R CMD javareconf
 
 #install littler
-sudo apt-get install littler
+# sudo apt-get install littler
+# the apt-get install does not work right on 64 bit... so building from source. 
+cd /home/hadoop
+wget http://dirk.eddelbuettel.com/code/littler/littler-0.1.3.tar.gz
+tar zxvf littler-0.1.3.tar.gz
+cd littler-0.1.3
+./configure
+make
+sudo make install
+
 
 #some packages have trouble installing without this link
 sudo ln -s /usr/lib/libgfortran.so.3 /usr/lib/libgfortran.so
