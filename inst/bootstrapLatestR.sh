@@ -20,10 +20,12 @@ sudo apt-get install --yes gfortran-4.2
 
 # install R using the FRONTEND call to eliminate 
 # user interactive requests
-sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes --force-yes r-base r-base-dev r-cran-hmisc
+sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes --force-yes --no-install-recommends r-base 
+sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes --force-yes --no-install-recommends r-base-dev r-cran-hmisc
+
 
 ## rJava and latest Sun Java
-sudo apt-get install --yes sun-java6-jdk sun-java6-jre r-cran-rjava 
+sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes --force-yes sun-java6-jdk sun-java6-jre r-cran-rjava 
 
 ## get rJava working, by any means possible
 echo "### Hacked in to get rJava working ###" | sudo tee -a  /home/hadoop/.bashrc
@@ -31,15 +33,15 @@ echo "export JAVA_HOME=/usr/lib/jvm/java-6-sun/jre" | sudo tee -a  /home/hadoop/
 sudo env JAVA_HOME=/usr/lib/jvm/java-6-sun/jre R CMD javareconf
 
 #install littler
-# sudo apt-get install littler
+ sudo apt-get install littler
 # the apt-get install does not work right on 64 bit... so building from source. 
-cd /home/hadoop
-wget http://dirk.eddelbuettel.com/code/littler/littler-0.1.3.tar.gz
-tar zxvf littler-0.1.3.tar.gz
-cd littler-0.1.3
-./configure
-make
-sudo make install
+#cd /home/hadoop
+#wget http://dirk.eddelbuettel.com/code/littler/littler-0.1.3.tar.gz
+#tar zxvf littler-0.1.3.tar.gz
+#cd littler-0.1.3
+#./configure
+#make
+#sudo make install
 
 
 #some packages have trouble installing without this link
