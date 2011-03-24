@@ -33,7 +33,7 @@ emrlapply <- function(clusterObject, X, FUN, taskTimeout=10, ... ) {
        funArgs,
        rObjectsOnNodes,
        file = objectsFileName,
-       compress="xz")
+       compress=TRUE)
 
   #make sure the bucket exists, and is empty
   #try(makeS3Bucket(clusterObject$s3TempDir)
