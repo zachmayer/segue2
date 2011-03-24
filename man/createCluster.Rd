@@ -1,8 +1,10 @@
 \name{createCluster}
 \alias{createCluster}
 \title{Creates the configuration object, uploads needed files, and starts...}
-\usage{createCluster(numInstances=2, cranPackages, filesOnNodes, rObjectsOnNodes, enableDebugging=FALSE, instancesPerNode,
-    masterInstanceType="m1.small", slaveInstanceType="m1.small", location="us-east-1a", ec2KeyName, copy.image=FALSE,
+\usage{createCluster(numInstances=2, cranPackages, filesOnNodes,
+    rObjectsOnNodes, enableDebugging=FALSE, instancesPerNode,
+    masterInstanceType="m1.small", slaveInstanceType="m1.small",
+    location="us-east-1a", ec2KeyName, copy.image=FALSE,
     otherBootstrapActions, sourcePackagesToInstall)}
 \description{Creates the configuration object, uploads needed files, and starts
 a Segue Hadoop cluster on Elastic Map Reduce.}

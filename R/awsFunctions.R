@@ -267,7 +267,7 @@ createCluster <- function(numInstances=2,
   ## feature to add the saved image to the nodes
   if (copy.image == TRUE) {
     imageFile <- paste( localTempDir, "/local-workspace-image.RData", sep="" )
-    save.image( file=imageFile, compress="xz" )
+    save.image( file=imageFile, compress=TRUE )
     clusterObject$filesOnNodes = c(clusterObject$filesOnNodes, imageFile)
   }
   
