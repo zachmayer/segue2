@@ -166,6 +166,7 @@ downloadS3File <- function(bucketName, keyName, localFile){
 ##' The the needed files are uploaded to S3 and the EMR nodes are started.
 ##' @param numInstances number of nodes (EC2 instances)
 ##' @param cranPackages vector of string names of CRAN packages to load on each cluster node
+##' @param customPackages vector of string file names of custom packages to load on each cluster node
 ##' @param filesOnNodes vector of string names of full path of files to be loaded on each node.
 ##' Files will be loaded into the local
 ##' path (i.e. ./file) on each node. 
@@ -198,6 +199,7 @@ downloadS3File <- function(bucketName, keyName, localFile){
 ##' @export
 createCluster <- function(numInstances=2,
                           cranPackages=NULL,
+                          customPackages=NULL,
                           filesOnNodes=NULL,
                           rObjectsOnNodes=NULL, 
                           enableDebugging=FALSE,
@@ -216,6 +218,7 @@ createCluster <- function(numInstances=2,
 
   clusterObject <- list(numInstances = numInstances,
                         cranPackages = cranPackages,
+                        customPackages = customPackages, 
                         enableDebugging = enableDebugging,
                         bootStrapLatestR = bootStrapLatestR,
                         filesOnNodes = filesOnNodes,
@@ -269,6 +272,11 @@ createCluster <- function(numInstances=2,
     imageFile <- paste( localTempDir, "/local-workspace-image.RData", sep="" )
     save.image( file=imageFile, compress=TRUE )
     clusterObject$filesOnNodes = c(clusterObject$filesOnNodes, imageFile)
+  }
+  
+  ## if customPackages are present, add them to the filesOnNodes
+  if (is.null(customPackages) == FALSE) {
+    clusterObject$filesOnNodes = c(clusterObject$filesOnNodes, customPackages)
   }
   
   # start cluster

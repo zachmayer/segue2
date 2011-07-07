@@ -1,11 +1,11 @@
 \name{createCluster}
 \alias{createCluster}
 \title{Creates the configuration object, uploads needed files, and starts...}
-\usage{createCluster(numInstances=2, cranPackages, filesOnNodes,
-    rObjectsOnNodes, enableDebugging=FALSE, instancesPerNode,
-    masterInstanceType="m1.small", slaveInstanceType="m1.small",
-    location="us-east-1a", ec2KeyName, copy.image=FALSE,
-    otherBootstrapActions, sourcePackagesToInstall)}
+\usage{createCluster(numInstances=2, cranPackages, customPackages,
+    filesOnNodes, rObjectsOnNodes, enableDebugging=FALSE,
+    instancesPerNode, masterInstanceType="m1.small",
+    slaveInstanceType="m1.small", location="us-east-1a", ec2KeyName,
+    copy.image=FALSE, otherBootstrapActions, sourcePackagesToInstall)}
 \description{Creates the configuration object, uploads needed files, and starts
 a Segue Hadoop cluster on Elastic Map Reduce.}
 \details{The the needed files are uploaded to S3 and the EMR nodes are started.}
@@ -14,6 +14,7 @@ populated. Keep in mind that this creates the cluster and starts the cluster run
 \author{James "JD" Long}
 \arguments{\item{numInstances}{number of nodes (EC2 instances)}
 \item{cranPackages}{vector of string names of CRAN packages to load on each cluster node}
+\item{customPackages}{vector of string file names of custom packages to load on each cluster node}
 \item{filesOnNodes}{vector of string names of full path of files to be loaded on each node.
 Files will be loaded into the local
 path (i.e. ./file) on each node.}

@@ -35,9 +35,29 @@ library(caTools)
 for (myPackage in cranPackages){
   try(install.packages(myPackage) )
   try(library(myPackage,  character.only = TRUE))
-  cat("finished installing")
+  cat("finished installing CRAN packages")
 }
 
+getPackageName <- function(sourceFile){
+    packPath <- paste("/tmp/Rpackage", pid, "/", sep='')
+    untar(sourceFile,  compressed="gzip", exdir=packPath)
+    file <- paste(packPath, dir(packPath)[1], "/DESCRIPTION", sep="")
+    dcf <- read.dcf(file = file)
+    if (NROW(dcf) < 1L) 
+          stop(gettextf("DESCRIPTION file of package '%s' is corrupt", 
+          pkg), domain = NA)
+    packageName <- as.list(dcf[1, ])$Package
+    unlink(paste(packPath, dir(packPath)[1], sep=""), recursive=TRUE)
+    return(packageName)
+}
+
+for (myPackage in customPackages){
+  myPackage <- paste("/tmp/segue-upload/", myPackage, sep="")
+  try(install.packages(myPackage, repos = NULL, type="source") )
+  packageName <- getPackageName(myPackage)
+  try(library(packageName,  character.only = TRUE)) 
+  cat("finished installing custom packages")
+}
 
 
 ## Feb 2010: JDL: moved this down in order to load CRAN packages

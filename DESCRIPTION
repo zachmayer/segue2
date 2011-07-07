@@ -1,17 +1,17 @@
 Package: segue
-Type: Package
+Imports:
+Maintainer: JD Long <jdlong@gmail.com>
+License: MIT License
 Title: A segue into parallel processing on Amazon's Web Services.
     Includes a parallel lapply function for the Elastic Map Reduce
     (EMR) engine
-Version: 0.02
-Date: 2010-12-30
-Author: James Long
-Maintainer: JD Long <jdlong@gmail.com>
-Depends: R (>= 2.7), rJava, caTools
-Imports:
-Description: A segue into parallel processing on Amazon's Web Services.
-License: MIT License
-URL: http://code.google.com/p/segue/
+Type: Package
 LazyLoad: yes
+Author: James Long
+Description: A segue into parallel processing on Amazon's Web Services.
+Version: 0.02
+URL: http://code.google.com/p/segue/
+Date: 2010-12-30
+Depends: R (>= 2.7), rJava, caTools
 Collate: 'awsFunctions.R' 'csvTransform.R' 'emrlapply.R'
     'segue-package.R' 'zzz.R'

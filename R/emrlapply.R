@@ -20,8 +20,12 @@ emrlapply <- function(clusterObject, X, FUN, taskTimeout=10, ... ) {
   myFun <- FUN
   funArgs <-  as.list(substitute(list(...)))[-1L]
 
-  ## TESTING!!!
-  #funArgs <- convertArgs(na.rm=TRUE)
+  ## create a string vector of the customPackages short names for use in loading in the mapper
+  customPackages <- NULL
+  for (name in clusterObject$customPackages) {
+    name <- basename(name)
+    customPackages <- c(customPackages, name)
+  }
   
   cranPackages <- clusterObject$cranPackages 
   rObjectsOnNodes <- clusterObject$rObjectsOnNodes
@@ -32,6 +36,7 @@ emrlapply <- function(clusterObject, X, FUN, taskTimeout=10, ... ) {
        myFun,
        funArgs,
        rObjectsOnNodes,
+       customPackages,
        file = objectsFileName,
        compress=TRUE)
 
