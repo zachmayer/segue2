@@ -11,10 +11,12 @@ con <- file("stdin", open = "r")
 pid <- as.character(Sys.getpid())
 libPath <- paste("/tmp/R", pid, "/", sep='')
 
+
 ## if you don't want to use the main CRAN site, you should
 ## change this to a mirror
 options(repos=c(CRAN="http://cran.r-project.org/"))
 dir.create(libPath)
+.libPaths(libPath)
 
 load("./emrData.RData") #contains:
                            # cranPackages - list of packages
@@ -25,17 +27,18 @@ load("./emrData.RData") #contains:
 
 attach(rObjectsOnNodes)
 
-install.packages("bitops", lib=libPath)
-install.packages("caTools", lib=libPath)
-library(bitops,  lib=libPath)
-library(caTools,  lib=libPath)
-
+install.packages("bitops")
+install.packages("caTools")
+library(bitops)
+library(caTools)
 
 for (myPackage in cranPackages){
-  try(install.packages(myPackage, lib=libPath) )
-  try(library(myPackage,  lib=libPath, character.only = TRUE))
+  try(install.packages(myPackage) )
+  try(library(myPackage,  character.only = TRUE))
   cat("finished installing")
 }
+
+
 
 ## Feb 2010: JDL: moved this down in order to load CRAN packages
 ##   before the files from the nodes. Objects dependent on
