@@ -188,6 +188,8 @@ downloadS3File <- function(bucketName, keyName, localFile){
 ##    uploaded to the temp area); "args" == vector of character arguments.   "localFile" and "s3file"
 ##    are mutually exclusive but one is required; "args" is optional.
 ##' @param sourcePackagesToInstall vector of full paths to source packages to be installed on each node
+##' @param masterBidPrice Bid price for master server
+##' @param slaveBidPrice Bid price for slave (task) server
 ##' @return an emrlapply() cluster object with appropriate fields
 ##'   populated. Keep in mind that this creates the cluster and starts the cluster running.
 ##' @author James "JD" Long
@@ -210,7 +212,9 @@ createCluster <- function(numInstances=2,
                           ec2KeyName=NULL,
                           copy.image=FALSE ,
                           otherBootstrapActions=NULL,
-                          sourcePackagesToInstall=NULL
+                          sourcePackagesToInstall=NULL,
+                          masterBidPrice=NULL,
+                          slaveBidPrice=NULL
                           ){
   ## this used to be an argument but not bootstrapping
   ## caused too many problems
@@ -231,7 +235,9 @@ createCluster <- function(numInstances=2,
                         ec2KeyName = ec2KeyName ,
                         copy.image = copy.image ,
                         otherBootstrapActions = otherBootstrapActions,
-                        sourcePackagesToInstall = sourcePackagesToInstall
+                        sourcePackagesToInstall = sourcePackagesToInstall,
+                        masterBidPrice = masterBidPrice,
+                        slaveBidPrice = slaveBidPrice
                         )
   
   localTempDir <- paste(tempdir(),
@@ -514,12 +520,37 @@ startCluster <- function(clusterObject){
   #debugging... set to my personal key
   #conf$setEc2KeyName("ec2ApiTools")
 
-  conf$setInstanceCount(new(Integer, as.character(numInstances)))
+  instanceGroups <- .jnew("java/util/Vector")
+  if (!is.null(clusterObject$masterBidPrice)) {
+      masterGroupConf <- new( com.amazonaws.services.elasticmapreduce.model.InstanceGroupConfig )
+      masterGroupConf$setInstanceCount(new(Integer, as.character(1)))
+      masterGroupConf$setInstanceRole(new(String, as.character("MASTER"))) 
+      masterGroupConf$setInstanceType(new(String, as.character(clusterObject$masterInstanceType))) 
+      masterGroupConf$setMarket(new(String, as.character("SPOT"))) 
+      masterGroupConf$setBidPrice(new(String, as.character(clusterObject$masterBidPrice))) 
+      instanceGroups$add(masterGroupConf)
+  }
+  if (!is.null(clusterObject$slaveBidPrice)) {
+      slaveGroupConf <- new( com.amazonaws.services.elasticmapreduce.model.InstanceGroupConfig )
+      slaveGroupConf$setInstanceCount(new(Integer, as.character(numInstances - 1)))
+      slaveGroupConf$setInstanceRole(new(String, as.character("CORE"))) 
+      slaveGroupConf$setInstanceType(new(String, as.character(clusterObject$slaveInstanceType))) 
+      slaveGroupConf$setMarket(new(String, as.character("SPOT"))) 
+      slaveGroupConf$setBidPrice(new(String, as.character(clusterObject$slaveBidPrice))) 
+      instanceGroups$add(slaveGroupConf)
+  }
+  if (!is.null(clusterObject$masterBidPrice) || !is.null(clusterObject$slaveBidPrice)) {
+      conf$setInstanceGroups(instanceGroups)
+  } else {
+      # Must configure instances either using instance count, 
+      # master and slave instance type or instance groups but not both
+      conf$setInstanceCount(new(Integer, as.character(numInstances)))
+      conf$setMasterInstanceType( clusterObject$masterInstanceType )      
+      conf$setSlaveInstanceType( clusterObject$slaveInstanceType )
+  }
   conf$setKeepJobFlowAliveWhenNoSteps(new(Boolean, TRUE))
-  conf$setMasterInstanceType( clusterObject$masterInstanceType )
 
   conf$setPlacement(new(com.amazonaws.services.elasticmapreduce.model.PlacementType, clusterObject$location))
-  conf$setSlaveInstanceType( clusterObject$slaveInstanceType )
   request$setInstances(conf)
   request$setLogUri(paste("s3://", s3TempDir, "-logs", sep=""))
   jobFlowName <- paste("RJob-", date(), sep="")
