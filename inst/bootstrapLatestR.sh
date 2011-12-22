@@ -40,9 +40,9 @@ echo "force-confold" | sudo tee -a  /etc/dpkg/dpkg.cfg
 echo "force-confdef" | sudo tee -a  /etc/dpkg/dpkg.cfg
 
 # add key to keyring so it doesn't complain
-gpg --keyserver pgp.mit.edu --recv-key 381BA480
-gpg -a --export 381BA480 > jranke_cran.asc
-sudo apt-key add jranke_cran.asc
+# gpg --keyserver pgp.mit.edu --recv-key 381BA480
+# gpg -a --export 381BA480 > jranke_cran.asc
+# sudo apt-key add jranke_cran.asc
 
 # install the gfortran
 sudo apt-get update

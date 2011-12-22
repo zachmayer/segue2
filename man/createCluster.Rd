@@ -5,7 +5,8 @@
     filesOnNodes, rObjectsOnNodes, enableDebugging=FALSE,
     instancesPerNode, masterInstanceType="m1.small",
     slaveInstanceType="m1.small", location="us-east-1a", ec2KeyName,
-    copy.image=FALSE, otherBootstrapActions, sourcePackagesToInstall, masterBidPrice, slaveBidPrice)}
+    copy.image=FALSE, otherBootstrapActions, sourcePackagesToInstall,
+    masterBidPrice, slaveBidPrice)}
 \description{Creates the configuration object, uploads needed files, and starts
 a Segue Hadoop cluster on Elastic Map Reduce.}
 \details{The the needed files are uploaded to S3 and the EMR nodes are started.}
