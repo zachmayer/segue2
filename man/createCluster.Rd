@@ -4,7 +4,7 @@
 \usage{createCluster(numInstances=2, cranPackages, customPackages,
     filesOnNodes, rObjectsOnNodes, enableDebugging=FALSE,
     instancesPerNode, masterInstanceType="m1.small",
-    slaveInstanceType="m1.small", location="us-east-1a", ec2KeyName,
+    slaveInstanceType="m1.small", location="us-east-1c", ec2KeyName,
     copy.image=FALSE, otherBootstrapActions, sourcePackagesToInstall,
     masterBidPrice, slaveBidPrice)}
 \description{Creates the configuration object, uploads needed files, and starts
