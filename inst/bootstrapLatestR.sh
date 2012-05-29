@@ -7,7 +7,7 @@ sudo tee /etc/apt/sources.list.d/R.list <<EOF
 # Change these lines if you don't want to use the main CRAN mirror.
 # debian R upgrade
 deb http://cran.r-project.org/bin/linux/debian squeeze-cran/
-deb-src http://mirrors.nics.utk.edu/cran/bin/linux/debian squeeze-cran/
+deb-src http://cran.r-project.org/cran/bin/linux/debian squeeze-cran/
 
 EOF
 
