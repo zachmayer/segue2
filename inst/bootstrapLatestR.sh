@@ -3,48 +3,42 @@
 # turn on logging and exit on error
 set -e -x
 
-# Default to stable
-sudo tee /etc/apt/sources.list <<EOF
-deb http://http.us.debian.org/debian   squeeze          main contrib non-free
-deb http://http.us.debian.org/debian   stable         main contrib non-free
-deb http://security.debian.org         squeeze/updates  main contrib non-free
-deb http://security.debian.org         stable/updates main contrib non-free
-
+sudo tee /etc/apt/sources.list.d/R.list <<EOF
 # Change these lines if you don't want to use the main CRAN mirror.
 # debian R upgrade
 deb http://cran.r-project.org/bin/linux/debian squeeze-cran/
-deb-src http://cran.r-project.org/bin/linux/debian squeeze-cran/
-deb http://cran.r-project.org/bin/linux/debian squeeze-cran/
-deb-src http://cran.r-project.org/bin/linux/debian squeeze-cran/
+deb-src http://mirrors.nics.utk.edu/cran/bin/linux/debian squeeze-cran/
+
 EOF
 
-## THE FOLLOWING WAS NEEDED IN LENNY, BUT IT APPEARS NOT IN SQUEEZE
+
+# ## THE FOLLOWING WAS NEEDED IN LENNY, BUT IT APPEARS NOT IN SQUEEZE
 # sudo tee /etc/apt/preferences <<EOF
-# Package: *
-# Pin: release a=oldstable
-# Pin-Priority: 910
+#  Package: *
+#  Pin: release a=oldstable
+#  Pin-Priority: 910
 
-# Package: *
-# Pin: release a=stable
-# Pin-Priority: 920
+#  Package: *
+#  Pin: release a=stable
+#  Pin-Priority: 920
 
-# Package: *
-# Pin: release a=testing
-# Pin-Priority: 900
+#  Package: *
+#  Pin: release a=testing
+#  Pin-Priority: 900
 
-# Package: *
-# Pin: release a=unstable
-# Pin-Priority: 800
+#  Package: *
+#  Pin: release a=unstable
+#  Pin-Priority: 800
 # EOF
 
 ## test
-echo "force-confold" | sudo tee -a  /etc/dpkg/dpkg.cfg
-echo "force-confdef" | sudo tee -a  /etc/dpkg/dpkg.cfg
+# echo "force-confold" | sudo tee -a  /etc/dpkg/dpkg.cfg
+# echo "force-confdef" | sudo tee -a  /etc/dpkg/dpkg.cfg
 
 # add key to keyring so it doesn't complain
-# gpg --keyserver pgp.mit.edu --recv-key 381BA480
-# gpg -a --export 381BA480 > jranke_cran.asc
-# sudo apt-key add jranke_cran.asc
+ gpg --keyserver pgp.mit.edu --recv-key 381BA480
+ gpg -a --export 381BA480 > jranke_cran.asc
+ sudo apt-key add jranke_cran.asc
 
 # install the gfortran
 sudo apt-get update
@@ -53,11 +47,11 @@ sudo apt-get update
 
 # install R using the FRONTEND call to eliminate
 # user interactive requests
-sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes --force-yes --no-install-recommends r-base
-sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes --force-yes --no-install-recommends r-base-dev r-cran-hmisc
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -t testing --yes --force-yes --no-install-recommends r-base
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -t testing --yes --force-yes --no-install-recommends r-base-dev r-cran-hmisc
 
 ## rJava and latest Sun Java
-sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes --force-yes sun-java6-jdk sun-java6-jre r-cran-rjava
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -t testing --yes --force-yes sun-java6-jdk sun-java6-jre r-cran-rjava
 
 ## get rJava working, by any means possible
 echo "### Hacked in to get rJava working ###" | sudo tee -a  /home/hadoop/.bashrc
