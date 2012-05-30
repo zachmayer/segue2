@@ -69,7 +69,9 @@ emrlapply <- function(clusterObject, X, FUN, taskTimeout=10, ... ) {
   #  system(paste("rm ", myTempDirOut, "/*", sep=""))
 
   downloadS3File(clusterObject$s3TempDirOut, ".all", myTempDirOut)
-   
+  ##  the results are going to be in the subdirectory "results"
+  myTempDirOut <- paste(myTempDirOut, "results", sep="/")
+
     #open files
   returnedFiles <- list.files(path=myTempDirOut, pattern="part")
     #yes, I read all the results into R then write them out to a text file

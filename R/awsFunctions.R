@@ -100,7 +100,7 @@ makeS3Bucket <- function(bucketName){
     if (s3$doesBucketExist(bucketName) == FALSE) {
       s3$createBucket(bucketName)
     } else {
-      warning("Unable to Create Bucket", call. = FALSE)
+      warning("Unable to Create Bucket. Bucket with same name already exists.", call. = FALSE)
     }
 }
 
@@ -149,12 +149,12 @@ downloadS3File <- function(bucketName, keyName, localFile){
         for (i in 1:length(listJavaObjs)) {
           # if statement here just to filter out subdirs
           key <- listJavaObjs[[i]]$getKey()[[1]]
-          if ( length( unlist(strsplit(key, split="/")) ) == 1) {
+          #if ( length( unlist(strsplit(key, split="/")) ) == 1) {
             if (substring( key, nchar( key ) - 7, nchar( key ) )  != "$folder$") {
               localFullFile <- paste(localFile, "/", listJavaObjs[[i]]$getKey()[[1]], sep="")
               downloadS3File(bucketName, listJavaObjs[[i]]$getKey()[[1]], localFullFile)
             }
-          }
+          #}
         }
       }
     }
@@ -515,7 +515,6 @@ startCluster <- function(clusterObject){
       conf$setEc2KeyName(clusterObject$ec2KeyName)
   }
   
-  conf$setHadoopVersion("0.20")
   
   #debugging... set to my personal key
   #conf$setEc2KeyName("ec2ApiTools")
@@ -551,10 +550,13 @@ startCluster <- function(clusterObject){
   conf$setKeepJobFlowAliveWhenNoSteps(new(Boolean, TRUE))
 
   conf$setPlacement(new(com.amazonaws.services.elasticmapreduce.model.PlacementType, clusterObject$location))
+  conf$setHadoopVersion("0.20.205")
   request$setInstances(conf)
   request$setLogUri(paste("s3://", s3TempDir, "-logs", sep=""))
   jobFlowName <- paste("RJob-", date(), sep="")
   request$setName(jobFlowName)
+  request$setAmiVersion("2.0.4")
+  
 
   result <- service$runJobFlow(request)
 
@@ -675,7 +677,7 @@ submitJob <- function(clusterObject, stopClusterOnComplete=FALSE, taskTimeout=10
   argList$add( "-input" )
   argList$add( paste("s3n://", s3TempDir, "/stream.txt", sep="") )
   argList$add( "-output" )
-  argList$add( paste("s3n://", s3TempDirOut, "/", sep="") )
+  argList$add( paste("s3n://", s3TempDirOut, "/results", sep="") )
   argList$add( "-mapper" )
   argList$add( "cat" )
   argList$add( "-reducer" )

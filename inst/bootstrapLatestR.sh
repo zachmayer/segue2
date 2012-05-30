@@ -51,12 +51,13 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -t testing --yes --force-yes
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -t testing --yes --force-yes --no-install-recommends r-base-dev r-cran-hmisc
 
 ## rJava and latest Sun Java
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -t testing --yes --force-yes sun-java6-jdk sun-java6-jre r-cran-rjava
+## causing errors so dropping
+# sudo DEBIAN_FRONTEND=noninteractive apt-get install -t unstable --yes --force-yes sun-java6-jdk sun-java6-jre r-cran-rjava
 
 ## get rJava working, by any means possible
-echo "### Hacked in to get rJava working ###" | sudo tee -a  /home/hadoop/.bashrc
-echo "export JAVA_HOME=/usr/lib/jvm/java-6-sun/jre" | sudo tee -a  /home/hadoop/.bashrc
-sudo env JAVA_HOME=/usr/lib/jvm/java-6-sun/jre R CMD javareconf
+# echo "### Hacked in to get rJava working ###" | sudo tee -a  /home/hadoop/.bashrc
+# echo "export JAVA_HOME=/usr/lib/jvm/java-6-sun/jre" | sudo tee -a  /home/hadoop/.bashrc
+# sudo env JAVA_HOME=/usr/lib/jvm/java-6-sun/jre R CMD javareconf
 
 #install littler
 sudo apt-get install littler
