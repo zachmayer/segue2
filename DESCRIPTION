@@ -9,7 +9,7 @@ Type: Package
 LazyLoad: yes
 Author: James Long
 Description: A segue into parallel processing on Amazon's Web Services.
-Version: 0.03
+Version: 0.04
 URL: http://code.google.com/p/segue/
 Date: 2012-05-29
 Depends: R (>= 2.7), rJava, caTools
