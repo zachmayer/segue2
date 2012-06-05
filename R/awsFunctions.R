@@ -206,8 +206,8 @@ createCluster <- function(numInstances=2,
                           rObjectsOnNodes=NULL, 
                           enableDebugging=FALSE,
                           instancesPerNode=NULL,
-                          masterInstanceType="m1.small",
-                          slaveInstanceType="m1.small",
+                          masterInstanceType="m1.large",
+                          slaveInstanceType="m1.large",
                           location = "us-east-1c",
                           ec2KeyName=NULL,
                           copy.image=FALSE ,
@@ -239,6 +239,17 @@ createCluster <- function(numInstances=2,
                         masterBidPrice = masterBidPrice,
                         slaveBidPrice = slaveBidPrice
                         )
+
+  if ( tolower(masterInstanceType) == "m1.small") {
+    clusterObject$masterInstanceType <- "m1.large"
+    print("WARNING: masterInstanceType set to m1.small. Segue requires 64 bit OS so the masterInstanceType is being changed to m1.large. You will be billed by Amazon accordingly.")
+  }
+  if ( tolower(slaveInstanceType) == "m1.small") {
+    clusterObject$slaveInstanceType <- "m1.large"
+    print("WARNING: slaveInstanceType set to m1.small. Segue requires 64 bit OS so the slaveInstanceType is being changed to m1.large. You will be billed by Amazon accordingly.")
+  }
+
+
   
   localTempDir <- paste(tempdir(),
                         paste(sample(c(0:9, letters), 10, rep=T), collapse=""),
@@ -411,7 +422,7 @@ startCluster <- function(clusterObject){
   }
 
   if (is.null(clusterObject$filesOnNodes) == FALSE) { # putting files on each node
-
+    print("INFO: You have selected files to be put on each node. These files are being uploaded to S3.")
     ## build a batch file that includes each element of filesOnNodes
     ## then add the batch file as a boot strap action
 
@@ -445,11 +456,12 @@ startCluster <- function(clusterObject){
      with( bootStrapConfig, setName("RBootStrapFiles"))
  
    bootStrapList$add(bootStrapConfig)
+   print("INFO: Upload of files to S3 is complete.")
   }
 
   
   if (is.null(clusterObject$sourcePackagesToInstall) == FALSE) {
-
+    print("INFO: Now building sources packages to install and uploading them based on the sourcePackagesToInstall list.")
     ## build a batch file that includes each file in sourcePackagesToInstall
     ## then add the batch file as a boot strap action
 
@@ -484,6 +496,7 @@ startCluster <- function(clusterObject){
      with( bootStrapConfig, setName("RinstallSourcePackages"))
  
    bootStrapList$add(bootStrapConfig)
+   print("INFO: Source packages uploaded.")
   }
 
   
@@ -516,9 +529,6 @@ startCluster <- function(clusterObject){
   }
   
   
-  #debugging... set to my personal key
-  #conf$setEc2KeyName("ec2ApiTools")
-
   instanceGroups <- .jnew("java/util/Vector")
   if (!is.null(clusterObject$masterBidPrice)) {
       masterGroupConf <- new( com.amazonaws.services.elasticmapreduce.model.InstanceGroupConfig )
