@@ -7,7 +7,7 @@ sudo tee /etc/apt/sources.list.d/R.list <<EOF
 # Change these lines if you don't want to use the main CRAN mirror.
 # debian R upgrade
 deb http://cran.r-project.org/bin/linux/debian squeeze-cran/
-# deb-src http://cran.r-project.org/cran/bin/linux/debian squeeze-cran/
+deb-src http://cran.r-project.org/bin/linux/debian squeeze-cran/
 
 EOF
 
@@ -47,8 +47,9 @@ sudo apt-get update
 
 # install R using the FRONTEND call to eliminate
 # user interactive requests
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -t testing --yes --force-yes --no-install-recommends r-base
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -t testing --yes --force-yes --no-install-recommends r-base-dev r-cran-hmisc
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -t testing --yes --force-yes gcc
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -t testing --yes --force-yes r-base
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -t testing --yes --force-yes r-base-dev r-cran-hmisc
 
 ## rJava and latest Sun Java
 ## causing errors so dropping
