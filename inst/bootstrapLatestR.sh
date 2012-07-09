@@ -61,7 +61,7 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -t testing --yes --force-yes
 # sudo env JAVA_HOME=/usr/lib/jvm/java-6-sun/jre R CMD javareconf
 
 #install littler
-sudo apt-get install littler
+sudo apt-get install -t testing littler
 
 #some packages have trouble installing without this link
 sudo ln -s /usr/lib/libgfortran.so.3 /usr/lib/libgfortran.so
