@@ -1,5 +1,6 @@
 Package: segue2
 Type: Package
+LazyLoad: yes
 Title: Ensembles of Caret Models
 Version: 0.06
 Date: 2015-01-14
