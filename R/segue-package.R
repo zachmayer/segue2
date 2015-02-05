@@ -6,21 +6,18 @@
 ##' package. If you are CPU bound this might be a useful package.
 ##' "We are stuck with technology when what we really want is just stuff that
 ##' works." - Douglas Adams
-##' 
+##'
 ##' \tabular{ll}{ Package: \tab segue\cr Type: \tab Package\cr Version: \tab
 ##' 0.01\cr Date: \tab 2010-12-08\cr License: \tab MIT License \cr LazyLoad:
 ##' \tab yes\cr } ~~ An overview of how to use the package, including the most
 ##' important ~~ ~~ functions ~~
-##' 
+##'
 ##' @name segue-package
 ##' @docType package
-##' @author Maintainer: James "JD" Long
-##' @references http://code.google.com/p/segue/
+##' @author Maintainer: Zachary Mayer
+##' @references https://github.com/zachmayer/segue2
 ##' @keywords package
-##' 
-##' 
-##' 
+##'
+##'
+##'
 NULL
-
-
-

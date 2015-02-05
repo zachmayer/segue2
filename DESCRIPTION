@@ -8,12 +8,13 @@ Authors@R: c(person(c("J", "D"), "Long", role=c("aut", "cre"),
     email="jdlong@gmail.com"),
     person(c("Zachary", "A."), "Mayer", role = c("aut"),
     email = "zach.mayer@gmail.com"))
+Maintainer: Zachary Mayer <zach.mayer@gmail.com>
 URL: https://github.com/zachmayer/segue2
 BugReports: https://github.com/zachmayer/segue2/issues
 Description: A segue into parallel processing on Amazon's Web Services.
 Depends:
     R (>= 3.1.0),
-    rJava,
+    RAmazonS3,
     caTools
 Imports:
 Suggests:
