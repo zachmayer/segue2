@@ -1,17 +1,23 @@
-Package: segue
-Imports:
-Maintainer: JD Long <jdlong@gmail.com>
-License: MIT License
-Title: A segue into parallel processing on Amazon's Web Services.
-    Includes a parallel lapply function for the Elastic Map Reduce
-    (EMR) engine
+Package: segue2
 Type: Package
 LazyLoad: yes
-Author: James Long
+Title: Ensembles of Caret Models
+Version: 0.06
+Date: 2015-01-14
+Authors@R: c(person(c("J", "D"), "Long", role=c("aut", "cre"),
+    email="jdlong@gmail.com"),
+    person(c("Zachary", "A."), "Mayer", role = c("aut"),
+    email = "zach.mayer@gmail.com"))
+URL: https://github.com/zachmayer/segue2
+BugReports: https://github.com/zachmayer/segue2/issues
 Description: A segue into parallel processing on Amazon's Web Services.
-Version: 0.05
-URL: http://code.google.com/p/segue/
-Date: 2012-07-09
-Depends: R (>= 2.11), rJava, caTools
-Collate: 'awsFunctions.R' 'csvTransform.R' 'emrlapply.R'
-    'segue-package.R' 'zzz.R'
+Depends:
+    R (>= 3.1.0),
+    rJava,
+    caTools
+Imports:
+Suggests:
+    testthat,
+    knitr
+License: MIT + file LICENSE
+VignetteBuilder: knitr
