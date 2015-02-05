@@ -21,7 +21,7 @@ before_install:
 install:
   - ./travis-tool.sh install_deps
   - ./travis-tool.sh github_package jimhester/covr
-  - Rscript 'install.packages("RAmazonS3", repos="http://www.omegahat.org/R", type="source")'
+  - Rscript -e 'install.packages("RAmazonS3", repos="http://www.omegahat.org/R", type="source")'
 
 script: ./travis-tool.sh run_tests
 
