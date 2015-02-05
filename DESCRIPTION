@@ -14,7 +14,7 @@ BugReports: https://github.com/zachmayer/segue2/issues
 Description: A segue into parallel processing on Amazon's Web Services.
 Depends:
     R (>= 3.1.0),
-    rJava,
+    rJava (>= 0.5-0),
     caTools
 Imports:
 Suggests:

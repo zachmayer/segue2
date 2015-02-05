@@ -2,7 +2,7 @@
 % Please edit documentation in R/awsFunctions.R
 \name{setCredentials}
 \alias{setCredentials}
-\title{##' AWS Support Function: set up credentials}
+\title{AWS Support Function: set up credentials}
 \usage{
 setCredentials(awsAccessKeyText, awsSecretKeyText,
   setEnvironmentVariables = TRUE)

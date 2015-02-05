@@ -18,10 +18,10 @@ works." - Douglas Adams}
 important ~~ ~~ functions ~~
 }
 \author{
-Maintainer: James "JD" Long
+Maintainer: Zachary Mayer
 }
 \references{
-http://code.google.com/p/segue/
+https://github.com/zachmayer/segue2
 }
 \keyword{package}
 
