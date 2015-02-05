@@ -16,7 +16,7 @@ Depends:
     R (>= 3.1.0),
     rJava (>= 0.5-0),
     caTools
-Imports: rJava (>= 0.5-0)
+Imports:
 Suggests:
     testthat,
     knitr

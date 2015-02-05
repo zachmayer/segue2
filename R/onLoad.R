@@ -9,7 +9,4 @@
   } else {
     packageStartupMessage( "Segue did not find your AWS credentials. Please run the setCredentials() function." )
   }
-
-
-  .jpackage(pkgname, lib.loc = libname)
 }
